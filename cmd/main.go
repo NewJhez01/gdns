@@ -1,7 +1,14 @@
 package main
 
-import "fmt"
+import (
+	"log"
+
+	"github.com/gdns/cmd/server"
+)
 
 func main() {
-	fmt.Println("hello world")
+	err := server.Serve()
+	if err != nil {
+		log.Fatalf("failed to start server prev: %s", err)
+	}
 }
