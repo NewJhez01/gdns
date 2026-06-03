@@ -2,9 +2,7 @@ package parser
 
 import (
 	"encoding/binary"
-	"errors"
 	"fmt"
-	"io"
 )
 
 type (
@@ -51,16 +49,11 @@ type Header struct {
 	Rcode   RCODE
 }
 
-func CreateHeader() *Header {
+func CreateHeaders() *Header {
 	return &Header{}
 }
 
-func (h *Header) Parse(r io.Reader) error {
-	buff := make([]byte, 12)
-	_, err := io.ReadFull(r, buff)
-	if err != nil {
-		return fmt.Errorf("failed to read into buffer prev: %s", err)
-	}
+func (h *Header) Parse(buff [12]byte) error {
 	h.Id = [2]byte(buff[:2])
 	h.QdCount = [2]byte(buff[4:6])
 	h.AnCount = [2]byte(buff[6:8])
@@ -68,7 +61,7 @@ func (h *Header) Parse(r io.Reader) error {
 	h.ArCount = [2]byte(buff[10:])
 
 	miscBuf := buff[2:4]
-	err = h.parseMisc(miscBuf)
+	err := h.parseMisc(miscBuf)
 	if err != nil {
 		return fmt.Errorf("failed to parse the second row of 16 bits from dns prev: %s", err)
 	}

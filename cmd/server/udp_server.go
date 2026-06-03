@@ -1,12 +1,14 @@
 package server
 
 import (
-	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/gdns/internal/infrastructure/parser"
 )
 
 type server struct {
@@ -41,12 +43,13 @@ func (s *server) listen() {
 	defer s.conn.Close()
 	buff := make([]byte, 512)
 	for {
-		n, err := s.conn.Read(buff)
+		_, _, err := s.conn.ReadFromUDP(buff)
 		if err != nil {
 			log.Fatalf("fail")
 		}
-		if n > 0 {
-			fmt.Printf("success here is the content %s", buff)
-		}
+		headerBuff := [12]byte(buff[:12])
+		h := parser.CreateHeaders()
+		h.Parse(headerBuff)
+
 	}
 }
