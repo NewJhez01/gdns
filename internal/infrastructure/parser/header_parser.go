@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"encoding/binary"
 	"fmt"
 	"io"
 )
@@ -69,7 +70,7 @@ func (h *Header) Parse(r io.Reader) error {
 	h.NsCount = [2]byte(buff[8:10])
 	h.ArCount = [2]byte(buff[10:])
 
-	miscBuf := [2]byte(buff[2:4])
+	miscBuf := buff[2:4]
 	err = h.parseMisc(miscBuf)
 	if err != nil {
 		return fmt.Errorf("failed to parse the second row of 16 bits from dns prev: %s", err)
@@ -78,6 +79,13 @@ func (h *Header) Parse(r io.Reader) error {
 	return nil
 }
 
-func (h *Header) parseMisc(b [2]byte) error {
+func (h *Header) parseMisc(b []byte) error {
+	bits := binary.BigEndian.Uint16(b)
+	h.Qr = QR((bits >> 15) & 0x1)
+	h.Aa = (bits>>10)&0x1 == 0x1
+	h.Tc = (bits>>9)&0x1 == 0x1
+	h.Rd = (bits>>8)&0x1 == 0x1
+	h.Ra = (bits>>7)&0x1 == 0x1
+
 	return nil
 }
