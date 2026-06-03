@@ -1,5 +1,11 @@
 services:
   app:
     build: .
+    image: gdns
     command: /docker-gdns
     restart: unless-stopped
+    ports:
+      - "8080:8080"
+  test:
+    image: gdns
+    command: go test ./...
