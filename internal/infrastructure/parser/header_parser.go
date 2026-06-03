@@ -31,6 +31,8 @@ const (
 	refused
 )
 
+type sixteenBit [2]byte
+
 // see rfc 1035 4.1.1 for exact header definition
 // https://datatracker.ietf.org/doc/html/rfc1035#autoid-41
 type Header struct {
@@ -39,11 +41,11 @@ type Header struct {
 	Rd      bool
 	Ra      bool
 	Z       uint8
-	Id      [2]byte
-	QdCount [2]byte
-	AnCount [2]byte
-	NsCount [2]byte
-	ArCount [2]byte
+	Id      sixteenBit
+	QdCount sixteenBit
+	AnCount sixteenBit
+	NsCount sixteenBit
+	ArCount sixteenBit
 	OpCode  OPCODE
 	Qr      QR
 	Rcode   RCODE
@@ -54,11 +56,11 @@ func CreateHeaders() *Header {
 }
 
 func (h *Header) Parse(buff [12]byte) error {
-	h.Id = [2]byte(buff[:2])
-	h.QdCount = [2]byte(buff[4:6])
-	h.AnCount = [2]byte(buff[6:8])
-	h.NsCount = [2]byte(buff[8:10])
-	h.ArCount = [2]byte(buff[10:])
+	h.Id = sixteenBit(buff[:2])
+	h.QdCount = sixteenBit(buff[4:6])
+	h.AnCount = sixteenBit(buff[6:8])
+	h.NsCount = sixteenBit(buff[8:10])
+	h.ArCount = sixteenBit(buff[10:])
 
 	miscBuf := buff[2:4]
 	err := h.parseMisc(miscBuf)
