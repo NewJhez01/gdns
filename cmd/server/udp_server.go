@@ -46,9 +46,7 @@ func (s *server) listen() {
 		if err != nil {
 			log.Fatalf("fail")
 		}
-		headerBuff := [12]byte(buff[:12])
-		h := parser.CreateHeaders()
-		h.Parse(headerBuff)
-
+		dns := parser.CreateNewDnsStruct()
+		dns.Parse([512]byte(buff))
 	}
 }

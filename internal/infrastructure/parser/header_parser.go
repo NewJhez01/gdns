@@ -51,7 +51,7 @@ type Header struct {
 	Rcode   RCODE
 }
 
-func CreateHeaders() *Header {
+func createHeaders() *Header {
 	return &Header{}
 }
 
