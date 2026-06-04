@@ -7,7 +7,7 @@ import (
 )
 
 func TestParser_StandardQuery(t *testing.T) {
-	h := CreateHeaders()
+	h := createHeaders()
 	dnsMock := [12]byte{0x00, 0x01, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 	err := h.Parse(dnsMock)
 	assert.NoError(t, err)
@@ -30,7 +30,7 @@ func TestParser_StandardQuery(t *testing.T) {
 }
 
 func TestParser_ResponseWithAllFlags(t *testing.T) {
-	h := CreateHeaders()
+	h := createHeaders()
 	dnsMock := [12]byte{0xAB, 0xCD, 0x87, 0x80, 0x00, 0x02, 0x00, 0x01, 0x00, 0x03, 0x00, 0x04}
 	err := h.Parse(dnsMock)
 	assert.NoError(t, err)
@@ -53,7 +53,7 @@ func TestParser_ResponseWithAllFlags(t *testing.T) {
 }
 
 func TestParser_InverseQuery(t *testing.T) {
-	h := CreateHeaders()
+	h := createHeaders()
 	dnsMock := [12]byte{0x12, 0x34, 0x08, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 	err := h.Parse(dnsMock)
 	assert.NoError(t, err)
@@ -76,7 +76,7 @@ func TestParser_InverseQuery(t *testing.T) {
 }
 
 func TestParser_ServerStatus(t *testing.T) {
-	h := CreateHeaders()
+	h := createHeaders()
 	dnsMock := [12]byte{0xFF, 0xFF, 0x90, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 	err := h.Parse(dnsMock)
 	assert.NoError(t, err)
@@ -114,7 +114,7 @@ func TestParser_VariousRCodes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h := CreateHeaders()
+			h := createHeaders()
 			secondRow := uint16(tt.rcode)
 			dnsMock := [12]byte{
 				0x00, 0x00,
@@ -129,7 +129,7 @@ func TestParser_VariousRCodes(t *testing.T) {
 }
 
 func TestParser_MaxCounts(t *testing.T) {
-	h := CreateHeaders()
+	h := createHeaders()
 	dnsMock := [12]byte{0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
 	err := h.Parse(dnsMock)
 	assert.NoError(t, err)
@@ -152,7 +152,7 @@ func TestParser_MaxCounts(t *testing.T) {
 }
 
 func TestParser_ZeroBuffer(t *testing.T) {
-	h := CreateHeaders()
+	h := createHeaders()
 	dnsMock := [12]byte{}
 	err := h.Parse(dnsMock)
 	assert.NoError(t, err)
@@ -187,7 +187,7 @@ func TestParser_ZNonZeroError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h := CreateHeaders()
+			h := createHeaders()
 			dnsMock := [12]byte{0x00, 0x00, 0x00, tt.val, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 			err := h.Parse(dnsMock)
 			assert.Error(t, err)
@@ -197,7 +197,7 @@ func TestParser_ZNonZeroError(t *testing.T) {
 }
 
 func TestParser_RealWorldGoogleDNS(t *testing.T) {
-	h := CreateHeaders()
+	h := createHeaders()
 	dnsMock := [12]byte{0x12, 0x34, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 	err := h.Parse(dnsMock)
 	assert.NoError(t, err)
@@ -220,7 +220,7 @@ func TestParser_RealWorldGoogleDNS(t *testing.T) {
 }
 
 func TestParser_ResponseWithNXDOMAIN(t *testing.T) {
-	h := CreateHeaders()
+	h := createHeaders()
 	dnsMock := [12]byte{0x00, 0x01, 0x80, 0x03, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00}
 	err := h.Parse(dnsMock)
 	assert.NoError(t, err)
