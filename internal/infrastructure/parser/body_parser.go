@@ -14,7 +14,7 @@ const (
 )
 
 type Question struct {
-	Qname  []byte
+	Qname  string
 	Qtype  [2]byte
 	Qclass [2]byte
 }
@@ -46,7 +46,10 @@ func (q *Question) parseStruct(b []byte, s state) (int, state, error) {
 		if b[0] == 0 {
 			return 1, QTYPE, nil
 		}
-		q.Qname = append(q.Qname, b[1:1+b[0]]...)
+		if q.Qname != "" {
+			q.Qname += "."
+		}
+		q.Qname += string(b[1 : 1+b[0]])
 
 		return 1 + int(b[0]), QNAME, nil
 	case QTYPE:
