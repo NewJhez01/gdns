@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/gdns/internal/infrastructure/parser"
+	"github.com/gdns/internal/dns/parser"
 )
 
 type server struct {
