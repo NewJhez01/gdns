@@ -8,6 +8,9 @@ services:
     environment:
       - REDIS_URL=redis:6379
     restart: unless-stopped
+  test:
+    image: gdns
+    command: go test ./test
 
   redis:
     image: redis:7-alpine
