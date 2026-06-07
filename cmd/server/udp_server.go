@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/gdns/internal/infrastructure/parser"
+	"github.com/gdns/internal/dns/parser"
 )
 
 type server struct {
@@ -19,14 +19,14 @@ const (
 	CONN_TYPE = "udp"
 )
 
-func Serve() error {
+func Serve() {
 	addr, err := net.ResolveUDPAddr(CONN_TYPE, PORT)
 	if err != nil {
-		return err
+		log.Fatalf("failed to resolve udp addr prev: %s", err)
 	}
 	conn, err := net.ListenUDP(CONN_TYPE, addr)
 	if err != nil {
-		return err
+		log.Fatalf("failed to listen to udp addr prev: %s", err)
 	}
 	s := &server{
 		conn,
@@ -35,7 +35,6 @@ func Serve() error {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 	<-sig
-	return nil
 }
 
 func (s *server) listen() {

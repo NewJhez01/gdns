@@ -12,26 +12,26 @@ type (
 )
 
 const (
-	query QR = iota
-	response
+	Query QR = iota
+	Response
 )
 
 const (
-	standardQuery OPCODE = iota
-	inverseQuery
-	serverStatus
+	StandardQuery OPCODE = iota
+	InverseQuery
+	ServerStatus
 )
 
 const (
-	noErrorCon RCODE = iota
-	formatErr
-	serverFailure
-	nameErr
-	notImplemented
-	refused
+	NoErrorCon RCODE = iota
+	FormatErr
+	ServerFailure
+	NameErr
+	NotImplemented
+	Refused
 )
 
-type sixteenBit [2]byte
+type SixteenBit [2]byte
 
 // see rfc 1035 4.1.1 for exact header definition
 // https://datatracker.ietf.org/doc/html/rfc1035#autoid-41
@@ -41,26 +41,26 @@ type Header struct {
 	Rd      bool
 	Ra      bool
 	Z       uint8
-	Id      sixteenBit
-	QdCount sixteenBit
-	AnCount sixteenBit
-	NsCount sixteenBit
-	ArCount sixteenBit
+	Id      SixteenBit
+	QdCount SixteenBit
+	AnCount SixteenBit
+	NsCount SixteenBit
+	ArCount SixteenBit
 	OpCode  OPCODE
 	Qr      QR
 	Rcode   RCODE
 }
 
-func createHeaders() *Header {
+func CreateHeaders() *Header {
 	return &Header{}
 }
 
 func (h *Header) Parse(buff [12]byte) error {
-	h.Id = sixteenBit(buff[:2])
-	h.QdCount = sixteenBit(buff[4:6])
-	h.AnCount = sixteenBit(buff[6:8])
-	h.NsCount = sixteenBit(buff[8:10])
-	h.ArCount = sixteenBit(buff[10:])
+	h.Id = SixteenBit(buff[:2])
+	h.QdCount = SixteenBit(buff[4:6])
+	h.AnCount = SixteenBit(buff[6:8])
+	h.NsCount = SixteenBit(buff[8:10])
+	h.ArCount = SixteenBit(buff[10:])
 
 	miscBuf := buff[2:4]
 	err := h.parseMisc(miscBuf)

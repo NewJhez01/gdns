@@ -19,11 +19,11 @@ type Question struct {
 	Qclass [2]byte
 }
 
-func createQuestion() *Question {
+func CreateQuestion() *Question {
 	return &Question{}
 }
 
-func (q *Question) parseQuestion(b []byte) error {
+func (q *Question) ParseQuestion(b []byte) error {
 	state := QNAME
 	bytesRead := 0
 	for {
