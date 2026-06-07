@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/gdns/internal/cache"
 	"github.com/gdns/internal/dns"
 )
 
@@ -45,9 +46,11 @@ func (s *server) listen() {
 		if err != nil {
 			log.Print("failed to read from udp continue")
 		}
-		err = dns.Resolve(buff)
+		rc := cache.CreateNewRedisClient()
+		resp, err := dns.Resolve(buff, rc)
 		if err != nil {
 			log.Fatalf("failed to resolve the dns request continue")
 		}
+		s.conn.Write([]byte(resp))
 	}
 }

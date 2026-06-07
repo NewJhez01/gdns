@@ -18,6 +18,9 @@ func CreateNewRedisClient() *RedisClient {
 
 func (r *RedisClient) GetDomainNameFromCache(ctx context.Context, key string) (string, error) {
 	val, err := r.client.Get(ctx, key).Result()
+	if err == redis.Nil {
+		return "", nil
+	}
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch domain from cache prev: %s", err)
 	}
