@@ -2,6 +2,7 @@ package dns
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/gdns/internal/blocklist"
@@ -26,12 +27,12 @@ func Resolve(b []byte, c cache.Cache, bl blocklist.Blocklist) (string, error) {
 		return REJECT, nil
 	}
 	if val == "" {
-		return handleDns(dns.Question.Qname, bl)
+		return handleDns(dns.Question.Qname, bl, c)
 	}
 	return val, nil
 }
 
-func handleDns(s string, b blocklist.Blocklist) (string, error) {
+func handleDns(s string, b blocklist.Blocklist, c cache.Cache) (string, error) {
 	ctx := context.Background()
 	ctxWIthTimeout, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
@@ -41,9 +42,13 @@ func handleDns(s string, b blocklist.Blocklist) (string, error) {
 	}
 
 	if isBlocked {
+		c.SetDomainName(ctx, s, fmt.Sprintf("%t", isBlocked), 15*time.Minute)
 		return REJECT, nil
 	}
 
 	// todo handle the fetching of the proper resolved address
+
+	c.SetDomainName(ctx, s, fmt.Sprintf("%t", isBlocked), 2*time.Minute)
+
 	return "", nil
 }
