@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 FROM golang:1.26.3
-
+RUN apk add --no-cache sqlite sqlite-libs
 WORKDIR /app
 
 COPY go.mod ./
