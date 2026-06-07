@@ -7,11 +7,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/gdns/internal/dns/parser"
+	"github.com/gdns/internal/cache"
+	"github.com/gdns/internal/dns"
 )
 
 type server struct {
-	conn *net.UDPConn
+	conn    *net.UDPConn
+	rClient cache.RedisClient
 }
 
 const (
@@ -19,7 +21,7 @@ const (
 	CONN_TYPE = "udp"
 )
 
-func Serve() {
+func Serve(redisClient cache.RedisClient) {
 	addr, err := net.ResolveUDPAddr(CONN_TYPE, PORT)
 	if err != nil {
 		log.Fatalf("failed to resolve udp addr prev: %s", err)
@@ -30,6 +32,7 @@ func Serve() {
 	}
 	s := &server{
 		conn,
+		redisClient,
 	}
 	go s.listen()
 	sig := make(chan os.Signal, 1)
@@ -41,11 +44,17 @@ func (s *server) listen() {
 	defer s.conn.Close()
 	buff := make([]byte, 512)
 	for {
-		_, _, err := s.conn.ReadFromUDP(buff)
+		n, addr, err := s.conn.ReadFromUDP(buff)
 		if err != nil {
-			log.Fatalf("fail")
+			log.Printf("failed to read from udp continue err: %s", err)
+			continue
 		}
-		dns := parser.CreateNewDnsStruct()
-		dns.Parse([512]byte(buff))
+		resp, err := dns.Resolve(buff[:n], &s.rClient)
+		if err != nil {
+			log.Printf("failed to resolve the dns request continue err: %s", err)
+			continue
+		}
+		// todo see issue #15 a valid dns response will be sent back
+		s.conn.WriteToUDP([]byte(resp), addr)
 	}
 }
