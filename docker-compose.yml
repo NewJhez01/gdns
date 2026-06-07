@@ -5,6 +5,8 @@ services:
     command: /docker-gdns
     ports:
       - "53:5555/udp"
+    volumes:
+      - ./data:/app/data
     depends_on:
       - redis
     environment:
