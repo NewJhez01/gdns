@@ -3,6 +3,8 @@ package blocklist
 import (
 	"database/sql"
 	"fmt"
+
+	_ "modernc.org/sqlite"
 )
 
 type SqliteClient struct {
