@@ -24,6 +24,7 @@ func main() {
 		Protocol:     2,
 		ReadTimeout:  3 * time.Second,
 		WriteTimeout: 3 * time.Second,
+		DialTimeout:  3 * time.Second,
 	})
 	r := cache.CreateNewRedisClient(redisClient)
 	server.Serve(*r)
