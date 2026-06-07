@@ -20,9 +20,3 @@ services:
     image: redis:7-alpine
     ports:
       - "127.0.0.1:6378:6379"
-
-  rabbitmq:
-    image: rabbitmq:4-management
-    ports:
-      - "5672:5672"
-      - "15672:15672"
