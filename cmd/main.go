@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gdns/cmd/server"
+	"github.com/gdns/internal/blocklist"
 	"github.com/gdns/internal/cache"
 	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
@@ -15,6 +16,16 @@ func main() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatalf("failed to load env err: %s", err)
+	}
+
+	sqliteClient, err := blocklist.CreateNewDbConn(os.Getenv("BLOCKLIST_URL"))
+	if err != nil {
+		log.Fatalf("failed to connect to sqlite prev: %s", err)
+	}
+
+	err = sqliteClient.Migrate()
+	if err != nil {
+		log.Fatalf("failed to create db prev: %s", err)
 	}
 
 	redisClient := redis.NewClient(&redis.Options{
@@ -27,5 +38,5 @@ func main() {
 		DialTimeout:  3 * time.Second,
 	})
 	r := cache.CreateNewRedisClient(redisClient)
-	server.Serve(*r)
+	server.Serve(*r, *sqliteClient)
 }
