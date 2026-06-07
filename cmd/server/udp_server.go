@@ -12,7 +12,8 @@ import (
 )
 
 type server struct {
-	conn *net.UDPConn
+	conn    *net.UDPConn
+	rClient cache.RedisClient
 }
 
 const (
@@ -20,7 +21,7 @@ const (
 	CONN_TYPE = "udp"
 )
 
-func Serve() {
+func Serve(redisClient cache.RedisClient) {
 	addr, err := net.ResolveUDPAddr(CONN_TYPE, PORT)
 	if err != nil {
 		log.Fatalf("failed to resolve udp addr prev: %s", err)
@@ -31,6 +32,7 @@ func Serve() {
 	}
 	s := &server{
 		conn,
+		redisClient,
 	}
 	go s.listen()
 	sig := make(chan os.Signal, 1)
@@ -42,15 +44,16 @@ func (s *server) listen() {
 	defer s.conn.Close()
 	buff := make([]byte, 512)
 	for {
-		_, _, err := s.conn.ReadFromUDP(buff)
+		n, addr, err := s.conn.ReadFromUDP(buff)
 		if err != nil {
 			log.Print("failed to read from udp continue")
+			continue
 		}
-		rc := cache.CreateNewRedisClient()
-		resp, err := dns.Resolve(buff, rc)
+		resp, err := dns.Resolve(buff[:n], &s.rClient)
 		if err != nil {
-			log.Fatalf("failed to resolve the dns request continue")
+			log.Print("failed to resolve the dns request continue")
+			continue
 		}
-		s.conn.Write([]byte(resp))
+		s.conn.WriteToUDP([]byte(resp), addr)
 	}
 }

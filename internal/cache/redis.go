@@ -12,8 +12,10 @@ type RedisClient struct {
 	client *redis.Client
 }
 
-func CreateNewRedisClient() *RedisClient {
-	return &RedisClient{}
+func CreateNewRedisClient(c *redis.Client) *RedisClient {
+	return &RedisClient{
+		client: c,
+	}
 }
 
 func (r *RedisClient) GetDomainNameFromCache(ctx context.Context, key string) (string, error) {
@@ -28,7 +30,7 @@ func (r *RedisClient) GetDomainNameFromCache(ctx context.Context, key string) (s
 }
 
 func (r *RedisClient) SetDomainName(ctx context.Context, key, val string, ttl time.Duration) error {
-	err := r.client.Set(ctx, key, val, ttl)
+	err := r.client.Set(ctx, key, val, ttl).Err()
 	if err != nil {
 		return fmt.Errorf("failed to write domain name: %s into cache prev:%s", val, err)
 	}
