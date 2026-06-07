@@ -5,8 +5,12 @@ services:
     command: /docker-gdns
     ports:
       - "8081:8080"
+    depends_on:
+      - redis
+      - rabbitmq
     environment:
       - REDIS_URL=redis:6379
+      - RABBIT_URL=amqp://guest:guest@rabbitmq:5672
     restart: unless-stopped
   test:
     image: gdns
@@ -16,3 +20,9 @@ services:
     image: redis:7-alpine
     ports:
       - "127.0.0.1:6378:6379"
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
