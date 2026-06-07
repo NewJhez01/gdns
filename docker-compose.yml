@@ -7,7 +7,6 @@ services:
       - "53:53/udp"
     depends_on:
       - redis
-      - rabbitmq
     environment:
       - BLOCKLIST_DB=/app/data/blocklist.db
       - REDIS_URL=redis:6379
