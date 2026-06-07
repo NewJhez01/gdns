@@ -2,6 +2,7 @@ package dns
 
 import (
 	"context"
+	"time"
 
 	"github.com/gdns/internal/blocklist"
 	"github.com/gdns/internal/cache"
@@ -31,12 +32,15 @@ func Resolve(b []byte, c cache.Cache, bl blocklist.Blocklist) (string, error) {
 }
 
 func handleDns(s string, b blocklist.Blocklist) (string, error) {
-	isBlocked, err := b.IsBlocked(s)
+	ctx := context.Background()
+	ctxWIthTimeout, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+	isBlocked, err := b.IsBlocked(s, ctxWIthTimeout)
 	if err != nil {
 		return "", err
 	}
 
-	if isBlocked == true {
+	if isBlocked {
 		return REJECT, nil
 	}
 

@@ -4,11 +4,11 @@ services:
     image: gdns
     command: /docker-gdns
     ports:
-      - "53:53/udp"
+      - "53:5555/udp"
     depends_on:
       - redis
     environment:
-      - BLOCKLIST_DB=/app/data/blocklist.db
+      - SQLITE_URL=/app/data/blocklist.db
       - REDIS_URL=redis:6379
     restart: unless-stopped
 

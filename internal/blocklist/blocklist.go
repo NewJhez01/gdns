@@ -1,5 +1,7 @@
 package blocklist
 
+import "context"
+
 type Blocklist interface {
-	IsBlocked(key string) (bool, error)
+	IsBlocked(key string, ctx context.Context) (bool, error)
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 	"time"
@@ -18,12 +19,15 @@ func main() {
 		log.Fatalf("failed to load env err: %s", err)
 	}
 
-	sqliteClient, err := blocklist.CreateNewDbConn(os.Getenv("BLOCKLIST_URL"))
+	sqliteClient, err := blocklist.CreateNewDbConn(os.Getenv("SQLITE_URL"))
 	if err != nil {
 		log.Fatalf("failed to connect to sqlite prev: %s", err)
 	}
 
-	err = sqliteClient.Migrate()
+	ctx := context.Background()
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+	err = sqliteClient.Migrate(ctxWithTimeout)
 	if err != nil {
 		log.Fatalf("failed to create db prev: %s", err)
 	}
