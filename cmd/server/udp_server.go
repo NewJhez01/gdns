@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/gdns/internal/dns/parser"
+	"github.com/gdns/internal/dns"
 )
 
 type server struct {
@@ -43,9 +43,11 @@ func (s *server) listen() {
 	for {
 		_, _, err := s.conn.ReadFromUDP(buff)
 		if err != nil {
-			log.Fatalf("fail")
+			log.Print("failed to read from udp continue")
 		}
-		dns := parser.CreateNewDnsStruct()
-		dns.Parse([512]byte(buff))
+		err = dns.Resolve(buff)
+		if err != nil {
+			log.Fatalf("failed to resolve the dns request continue")
+		}
 	}
 }

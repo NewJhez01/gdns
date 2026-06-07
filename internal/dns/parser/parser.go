@@ -11,7 +11,7 @@ func CreateNewDnsStruct() *Dns {
 	return &Dns{}
 }
 
-func (d *Dns) Parse(b [512]byte) error {
+func (d *Dns) Parse(b []byte) error {
 	h := CreateHeaders()
 	headerBuff := [12]byte(b[:12])
 	err := h.Parse(headerBuff)
