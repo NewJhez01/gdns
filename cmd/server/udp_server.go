@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/gdns/internal/blocklist"
 	"github.com/gdns/internal/cache"
 	"github.com/gdns/internal/dns"
 )
@@ -14,6 +15,7 @@ import (
 type server struct {
 	conn    *net.UDPConn
 	rClient cache.RedisClient
+	s       blocklist.SqliteClient
 }
 
 const (
@@ -21,7 +23,7 @@ const (
 	CONN_TYPE = "udp"
 )
 
-func Serve(redisClient cache.RedisClient) {
+func Serve(redisClient cache.RedisClient, b blocklist.SqliteClient) {
 	addr, err := net.ResolveUDPAddr(CONN_TYPE, PORT)
 	if err != nil {
 		log.Fatalf("failed to resolve udp addr prev: %s", err)
@@ -33,6 +35,7 @@ func Serve(redisClient cache.RedisClient) {
 	s := &server{
 		conn,
 		redisClient,
+		b,
 	}
 	go s.listen()
 	sig := make(chan os.Signal, 1)
@@ -49,7 +52,7 @@ func (s *server) listen() {
 			log.Printf("failed to read from udp continue err: %s", err)
 			continue
 		}
-		resp, err := dns.Resolve(buff[:n], &s.rClient)
+		resp, err := dns.Resolve(buff[:n], &s.rClient, &s.s)
 		if err != nil {
 			log.Printf("failed to resolve the dns request continue err: %s", err)
 			continue

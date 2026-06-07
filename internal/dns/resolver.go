@@ -2,12 +2,16 @@ package dns
 
 import (
 	"context"
+	"time"
 
+	"github.com/gdns/internal/blocklist"
 	"github.com/gdns/internal/cache"
 	"github.com/gdns/internal/dns/parser"
 )
 
-func Resolve(b []byte, c cache.Cache) (string, error) {
+const REJECT = "NXDOMAIN"
+
+func Resolve(b []byte, c cache.Cache, bl blocklist.Blocklist) (string, error) {
 	dns := parser.CreateNewDnsStruct()
 	err := dns.Parse(b)
 	if err != nil {
@@ -19,15 +23,27 @@ func Resolve(b []byte, c cache.Cache) (string, error) {
 		return "", err
 	}
 	if val == "blocked" {
-		return "NXDOMAIN", nil
+		return REJECT, nil
 	}
 	if val == "" {
-		return handleDns(dns.Question.Qname), nil
+		return handleDns(dns.Question.Qname, bl)
 	}
 	return val, nil
 }
 
-func handleDns(s string) string {
-	// todo implement logic for fetching the blocked status from the sql lite db
-	return s
+func handleDns(s string, b blocklist.Blocklist) (string, error) {
+	ctx := context.Background()
+	ctxWIthTimeout, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+	isBlocked, err := b.IsBlocked(s, ctxWIthTimeout)
+	if err != nil {
+		return "", err
+	}
+
+	if isBlocked {
+		return REJECT, nil
+	}
+
+	// todo handle the fetching of the proper resolved address
+	return "", nil
 }
