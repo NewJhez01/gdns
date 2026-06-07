@@ -46,14 +46,15 @@ func (s *server) listen() {
 	for {
 		n, addr, err := s.conn.ReadFromUDP(buff)
 		if err != nil {
-			log.Print("failed to read from udp continue")
+			log.Printf("failed to read from udp continue err: %s", err)
 			continue
 		}
 		resp, err := dns.Resolve(buff[:n], &s.rClient)
 		if err != nil {
-			log.Print("failed to resolve the dns request continue")
+			log.Printf("failed to resolve the dns request continue err: %s", err)
 			continue
 		}
+		// todo see issue #15 a valid dns response will be sent back
 		s.conn.WriteToUDP([]byte(resp), addr)
 	}
 }

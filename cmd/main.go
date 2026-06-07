@@ -14,7 +14,7 @@ import (
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatalf("failed to load env")
+		log.Fatalf("failed to load env err: %s", err)
 	}
 
 	redisClient := redis.NewClient(&redis.Options{
