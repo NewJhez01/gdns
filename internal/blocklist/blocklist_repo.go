@@ -19,7 +19,7 @@ func CreateNewDbConn(path string) (*SqliteClient, error) {
 	}
 	err = db.Ping()
 	if err != nil {
-		return nil, fmt.Errorf("the db is unavailible, prev: %s", err)
+		return nil, fmt.Errorf("the db is unavailable, prev: %s", err)
 	}
 	return &SqliteClient{db}, nil
 }
