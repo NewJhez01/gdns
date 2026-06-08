@@ -7,7 +7,7 @@ import (
 )
 
 type Value struct {
-	Ip        string
+	Answer    []byte
 	IsBlocked bool
 }
 
