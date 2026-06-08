@@ -14,14 +14,13 @@ const REJECT = "NXDOMAIN"
 
 func Resolve(b []byte, c cache.Cache, bl blocklist.Blocklist) ([]byte, error) {
 	dns := parser.CreateNewDnsStruct()
-	err := dns.Parse(b)
-	if err != nil {
+	if err := dns.Parse(b); err != nil {
 		return nil, err
 	}
 	ctx := context.Background()
 	val, err := c.GetDomainNameFromCache(ctx, dns.Question.Qname)
 	if errors.Is(err, cache.ErrEmpty) {
-		return handleDns(dns.Question.Qname, bl, c)
+		return handleDns(b, dns.Question.Qname, bl, c)
 	}
 	if err != nil {
 		return nil, err
@@ -34,7 +33,7 @@ func Resolve(b []byte, c cache.Cache, bl blocklist.Blocklist) ([]byte, error) {
 	return nil, nil
 }
 
-func handleDns(s string, b blocklist.Blocklist, c cache.Cache) ([]byte, error) {
+func handleDns(buff []byte, s string, b blocklist.Blocklist, c cache.Cache) ([]byte, error) {
 	ctx := context.Background()
 	ctxWIthTimeout, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
@@ -54,8 +53,8 @@ func handleDns(s string, b blocklist.Blocklist, c cache.Cache) ([]byte, error) {
 		return nil, nil
 	}
 
-	answer, err := forwardToUpstream()
-	if err == nil {
+	answer, err := forwardToUpstream(buff)
+	if err != nil {
 		return nil, err
 	}
 
@@ -63,8 +62,7 @@ func handleDns(s string, b blocklist.Blocklist, c cache.Cache) ([]byte, error) {
 		Answer:    answer,
 		IsBlocked: false,
 	}
-	err = c.SetDomainName(ctx, s, val, 2*time.Minute)
-	if err != nil {
+	if err := c.SetDomainName(ctx, s, val, 2*time.Minute); err != nil {
 		return nil, err
 	}
 
