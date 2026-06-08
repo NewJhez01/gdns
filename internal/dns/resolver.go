@@ -59,7 +59,10 @@ func handleDns(s string, b blocklist.Blocklist, c cache.Cache) (string, error) {
 		Ip:        "",
 		IsBlocked: false,
 	}
-	c.SetDomainName(ctx, s, val, 2*time.Minute)
+	err = c.SetDomainName(ctx, s, val, 2*time.Minute)
+	if err != nil {
+		return "", err
+	}
 
 	return "", nil
 }

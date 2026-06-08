@@ -30,7 +30,8 @@ func (r *RedisClient) GetDomainNameFromCache(ctx context.Context, key string) (V
 	val := Value{}
 	err = json.Unmarshal([]byte(res), &val)
 	if err != nil {
-		return Value{}, fmt.Errorf("failed to parse json prev: %s", err)
+		_ = r.client.Del(ctx, key)
+		return Value{}, ErrEmpty
 	}
 	return val, nil
 }
