@@ -2,6 +2,7 @@ package dns
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -20,16 +21,16 @@ func Resolve(b []byte, c cache.Cache, bl blocklist.Blocklist) (string, error) {
 	}
 	ctx := context.Background()
 	val, err := c.GetDomainNameFromCache(ctx, dns.Question.Qname)
+	if errors.Is(err, cache.ErrEmpty) {
+		return handleDns(dns.Question.Qname, bl, c)
+	}
 	if err != nil {
 		return "", err
 	}
-	if val == "blocked" {
+	if val.IsBlocked == true {
 		return REJECT, nil
 	}
-	if val == "" {
-		return handleDns(dns.Question.Qname, bl, c)
-	}
-	return val, nil
+	return "", nil
 }
 
 func handleDns(s string, b blocklist.Blocklist, c cache.Cache) (string, error) {
@@ -42,13 +43,24 @@ func handleDns(s string, b blocklist.Blocklist, c cache.Cache) (string, error) {
 	}
 
 	if isBlocked {
-		c.SetDomainName(ctx, s, fmt.Sprintf("%t", isBlocked), 15*time.Minute)
+		val := cache.Value{
+			Ip:        REJECT,
+			IsBlocked: true,
+		}
+		err := c.SetDomainName(ctx, s, val, 15*time.Minute)
+		if err != nil {
+			return "", err
+		}
 		return REJECT, nil
 	}
 
 	// todo handle the fetching of the proper resolved address
-
-	c.SetDomainName(ctx, s, fmt.Sprintf("%t", isBlocked), 2*time.Minute)
+	// this is also where the ip is then getting fetched to set in cache
+	val := cache.Value{
+		Ip:        "",
+		IsBlocked: false,
+	}
+	c.SetDomainName(ctx, s, val, 2*time.Minute)
 
 	return "", nil
 }
