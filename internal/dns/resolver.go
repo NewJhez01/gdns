@@ -25,7 +25,7 @@ func Resolve(b []byte, c cache.Cache, bl blocklist.Blocklist) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if val.IsBlocked == true {
+	if val.IsBlocked {
 		// to do after the dns answer parser is built parse the reject into proper
 		// resp and return that
 		return []byte(REJECT), nil

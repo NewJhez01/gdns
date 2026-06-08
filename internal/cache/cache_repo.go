@@ -43,7 +43,7 @@ func (r *RedisClient) SetDomainName(ctx context.Context, key string, val Value, 
 	}
 	err = r.client.Set(ctx, key, b, ttl).Err()
 	if err != nil {
-		return fmt.Errorf("failed to write domain name: %s into cache prev:%s", val.Answer, err)
+		return fmt.Errorf("failed to write domain name: %s into cache prev:%s", key, err)
 	}
 	return nil
 }
