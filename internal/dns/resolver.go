@@ -3,7 +3,6 @@ package dns
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/gdns/internal/blocklist"
