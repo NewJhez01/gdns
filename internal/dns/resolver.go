@@ -12,11 +12,11 @@ import (
 
 const REJECT = "NXDOMAIN"
 
-func Resolve(b []byte, c cache.Cache, bl blocklist.Blocklist) (string, error) {
+func Resolve(b []byte, c cache.Cache, bl blocklist.Blocklist) ([]byte, error) {
 	dns := parser.CreateNewDnsStruct()
 	err := dns.Parse(b)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	ctx := context.Background()
 	val, err := c.GetDomainNameFromCache(ctx, dns.Question.Qname)
@@ -24,45 +24,49 @@ func Resolve(b []byte, c cache.Cache, bl blocklist.Blocklist) (string, error) {
 		return handleDns(dns.Question.Qname, bl, c)
 	}
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if val.IsBlocked == true {
-		return REJECT, nil
+		// to do after the dns answer parser is built parse the reject into proper
+		// resp and return that
+		return []byte(REJECT), nil
 	}
-	return "", nil
+	return nil, nil
 }
 
-func handleDns(s string, b blocklist.Blocklist, c cache.Cache) (string, error) {
+func handleDns(s string, b blocklist.Blocklist, c cache.Cache) ([]byte, error) {
 	ctx := context.Background()
 	ctxWIthTimeout, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 	isBlocked, err := b.IsBlocked(s, ctxWIthTimeout)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if isBlocked {
 		val := cache.Value{
-			Ip:        REJECT,
 			IsBlocked: true,
 		}
 		err := c.SetDomainName(ctx, s, val, 15*time.Minute)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
-		return REJECT, nil
+		return nil, nil
 	}
 
-	// todo handle the fetching of the proper resolved address
-	// this is also where the ip is then getting fetched to set in cache
+	answer, err := forwardToUpstream()
+	if err == nil {
+		return nil, err
+	}
+
 	val := cache.Value{
-		Ip:        "",
+		Answer:    answer,
 		IsBlocked: false,
 	}
 	err = c.SetDomainName(ctx, s, val, 2*time.Minute)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return "", nil
+	return answer, nil
 }
