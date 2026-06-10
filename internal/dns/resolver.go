@@ -26,7 +26,7 @@ func Resolve(b []byte, c cache.Cache, bl blocklist.Blocklist) ([]byte, error) {
 	if val.IsBlocked {
 		return dns.BuildNxDomainResp(), nil
 	}
-	return nil, nil
+	return val.Answer, nil
 }
 
 func handleDns(buff []byte, s string, b blocklist.Blocklist, c cache.Cache) ([]byte, error) {
