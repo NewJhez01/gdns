@@ -18,7 +18,7 @@ func Resolve(b []byte, c cache.Cache, bl blocklist.Blocklist) ([]byte, error) {
 	ctx := context.Background()
 	val, err := c.GetDomainNameFromCache(ctx, dns.Question.Qname)
 	if errors.Is(err, cache.ErrEmpty) {
-		return handleDns(b, dns.Question.Qname, bl, c)
+		return handleDns(b, dns.Question.Qname, bl, c, dns)
 	}
 	if err != nil {
 		return nil, err
@@ -29,7 +29,7 @@ func Resolve(b []byte, c cache.Cache, bl blocklist.Blocklist) ([]byte, error) {
 	return val.Answer, nil
 }
 
-func handleDns(buff []byte, s string, b blocklist.Blocklist, c cache.Cache) ([]byte, error) {
+func handleDns(buff []byte, s string, b blocklist.Blocklist, c cache.Cache, d *parser.Dns) ([]byte, error) {
 	ctx := context.Background()
 	ctxWIthTimeout, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
@@ -46,7 +46,7 @@ func handleDns(buff []byte, s string, b blocklist.Blocklist, c cache.Cache) ([]b
 		if err != nil {
 			return nil, err
 		}
-		return nil, nil
+		return d.BuildNxDomainResp()
 	}
 
 	answer, err := forwardToUpstream(buff)
