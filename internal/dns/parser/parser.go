@@ -1,6 +1,8 @@
 package parser
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Dns struct {
 	Header   Header
@@ -10,6 +12,8 @@ type Dns struct {
 func CreateNewDnsStruct() *Dns {
 	return &Dns{}
 }
+
+type SixteenBit [2]byte
 
 func (d *Dns) Parse(b []byte) error {
 	h := CreateHeaders()

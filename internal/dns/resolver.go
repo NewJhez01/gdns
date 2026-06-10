@@ -10,8 +10,6 @@ import (
 	"github.com/gdns/internal/dns/parser"
 )
 
-const REJECT = "NXDOMAIN"
-
 func Resolve(b []byte, c cache.Cache, bl blocklist.Blocklist) ([]byte, error) {
 	dns := parser.CreateNewDnsStruct()
 	if err := dns.Parse(b); err != nil {
@@ -20,24 +18,22 @@ func Resolve(b []byte, c cache.Cache, bl blocklist.Blocklist) ([]byte, error) {
 	ctx := context.Background()
 	val, err := c.GetDomainNameFromCache(ctx, dns.Question.Qname)
 	if errors.Is(err, cache.ErrEmpty) {
-		return handleDns(b, dns.Question.Qname, bl, c)
+		return handleDns(b, dns.Question.Qname, bl, c, dns)
 	}
 	if err != nil {
 		return nil, err
 	}
 	if val.IsBlocked {
-		// to do after the dns answer parser is built parse the reject into proper
-		// resp and return that
-		return []byte(REJECT), nil
+		return dns.BuildNxDomainResp()
 	}
-	return nil, nil
+	return val.Answer, nil
 }
 
-func handleDns(buff []byte, s string, b blocklist.Blocklist, c cache.Cache) ([]byte, error) {
+func handleDns(buff []byte, s string, bl blocklist.Blocklist, c cache.Cache, d *parser.Dns) ([]byte, error) {
 	ctx := context.Background()
 	ctxWIthTimeout, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
-	isBlocked, err := b.IsBlocked(s, ctxWIthTimeout)
+	isBlocked, err := bl.IsBlocked(s, ctxWIthTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +46,7 @@ func handleDns(buff []byte, s string, b blocklist.Blocklist, c cache.Cache) ([]b
 		if err != nil {
 			return nil, err
 		}
-		return nil, nil
+		return d.BuildNxDomainResp()
 	}
 
 	answer, err := forwardToUpstream(buff)
