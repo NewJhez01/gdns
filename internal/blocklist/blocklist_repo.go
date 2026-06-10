@@ -42,7 +42,7 @@ func (r *SqliteClient) Migrate(ctx context.Context) error {
 		`
         CREATE TABLE IF NOT EXISTS blocked_domains (
             domain TEXT PRIMARY KEY
-        )
+        ) WITHOUT ROWID
     `)
 	if err != nil {
 		return err
