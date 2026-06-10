@@ -15,8 +15,8 @@ func TestCreateQuestionSection1(t *testing.T) {
 	}
 	q := parser.CreateQuestion()
 	err := q.ParseQuestion(b)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, "a.example.com", q.Qname)
-	assert.Equal(t, [2]byte{0x00, 0x01}, q.Qtype)
-	assert.Equal(t, [2]byte{0x00, 0x01}, q.Qclass)
+	assert.Equal(t, parser.SixteenBit{0x00, 0x01}, q.Qtype)
+	assert.Equal(t, parser.SixteenBit{0x00, 0x01}, q.Qclass)
 }
