@@ -2,10 +2,11 @@ package parser
 
 import (
 	"encoding/binary"
+	"errors"
 	"strings"
 )
 
-func (d *Dns) marshall() []byte {
+func (d *Dns) marshall() ([]byte, error) {
 	b := make([]byte, 12)
 	var misc uint16
 	misc |= (uint16(d.Header.Qr) & 0x1) << 15
@@ -32,6 +33,9 @@ func (d *Dns) marshall() []byte {
 	copy(b[10:12], d.Header.ArCount[:])
 	parts := strings.SplitSeq(d.Question.Qname, ".")
 	for v := range parts {
+		if len(v) > 63 {
+			return nil, errors.New("label is too big")
+		}
 		b = append(b, byte(len(v)))
 		b = append(b, []byte(v)...)
 	}
@@ -41,10 +45,10 @@ func (d *Dns) marshall() []byte {
 	b = append(b, d.Question.Qtype[1])
 	b = append(b, d.Question.Qclass[0])
 	b = append(b, d.Question.Qclass[1])
-	return b
+	return b, nil
 }
 
-func (d *Dns) BuildNxDomainResp() []byte {
+func (d *Dns) BuildNxDomainResp() ([]byte, error) {
 	d.Header.Qr = Response
 	d.Header.Rcode = NameErr
 	d.Header.QdCount = SixteenBit{0x00, 0x01}
