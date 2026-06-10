@@ -31,7 +31,7 @@ docker compose up -d
 This starts:
 
 - Redis for response caching
-- GDNS UDP server on port 5555, with automatic SQLite migration on first boot
+- GDNS UDP server on port 5555 (inside docker), with automatic SQLite migration on first boot
 
 ### Configure Your Network
 
