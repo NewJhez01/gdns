@@ -29,11 +29,11 @@ func Resolve(b []byte, c cache.Cache, bl blocklist.Blocklist) ([]byte, error) {
 	return val.Answer, nil
 }
 
-func handleDns(buff []byte, s string, b blocklist.Blocklist, c cache.Cache, d *parser.Dns) ([]byte, error) {
+func handleDns(buff []byte, s string, bl blocklist.Blocklist, c cache.Cache, d *parser.Dns) ([]byte, error) {
 	ctx := context.Background()
 	ctxWIthTimeout, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
-	isBlocked, err := b.IsBlocked(s, ctxWIthTimeout)
+	isBlocked, err := bl.IsBlocked(s, ctxWIthTimeout)
 	if err != nil {
 		return nil, err
 	}
