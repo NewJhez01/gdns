@@ -31,8 +31,6 @@ const (
 	Refused
 )
 
-type SixteenBit [2]byte
-
 // see rfc 1035 4.1.1 for exact header definition
 // https://datatracker.ietf.org/doc/html/rfc1035#autoid-41
 type Header struct {
@@ -74,15 +72,15 @@ func (h *Header) Parse(buff [12]byte) error {
 func (h *Header) parseMisc(b []byte) error {
 	bits := binary.BigEndian.Uint16(b)
 	h.Qr = QR((bits >> 15) & 0x1)
+	h.OpCode = OPCODE((bits >> 11) & 0xF)
 	h.Aa = (bits>>10)&0x1 == 1
 	h.Tc = (bits>>9)&0x1 == 1
 	h.Rd = (bits>>8)&0x1 == 1
 	h.Ra = (bits>>7)&0x1 == 1
-	h.OpCode = OPCODE((bits >> 11) & 0xF)
-	h.Rcode = RCODE(bits & 0xF)
 	if z := ((bits >> 4) & 0x7); z != 0 {
 		return fmt.Errorf("Z must be 0 and is %d", z)
 	}
+	h.Rcode = RCODE(bits & 0xF)
 
 	return nil
 }

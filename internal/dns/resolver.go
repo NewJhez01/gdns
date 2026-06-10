@@ -10,8 +10,6 @@ import (
 	"github.com/gdns/internal/dns/parser"
 )
 
-const REJECT = "NXDOMAIN"
-
 func Resolve(b []byte, c cache.Cache, bl blocklist.Blocklist) ([]byte, error) {
 	dns := parser.CreateNewDnsStruct()
 	if err := dns.Parse(b); err != nil {
@@ -26,9 +24,7 @@ func Resolve(b []byte, c cache.Cache, bl blocklist.Blocklist) ([]byte, error) {
 		return nil, err
 	}
 	if val.IsBlocked {
-		// to do after the dns answer parser is built parse the reject into proper
-		// resp and return that
-		return []byte(REJECT), nil
+		return dns.ParseResponse(), nil
 	}
 	return nil, nil
 }
