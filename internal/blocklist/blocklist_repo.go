@@ -1,9 +1,13 @@
 package blocklist
 
 import (
+	"bufio"
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
+	"os"
+	"strings"
 
 	_ "modernc.org/sqlite"
 )
@@ -47,5 +51,40 @@ func (r *SqliteClient) Migrate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return nil
+
+	f, err := os.Open("data/blocked_domains.txt")
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	sc := bufio.NewScanner(f)
+	tx, err := r.db.Begin()
+	stmt, err := tx.Prepare("INSERT OR IGNORE INTO blocked_domains(domain) VALUES(?)")
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	defer stmt.Close()
+
+	count := 0
+	for sc.Scan() {
+		domain := strings.TrimSpace(sc.Text())
+		if domain == "" {
+			continue
+		}
+		_, err := stmt.Exec(domain)
+		if err != nil {
+			log.Printf("failed to insert %s: %v", domain, err)
+			continue
+		}
+		count++
+	}
+	log.Printf("inserted %d domains", count)
+
+	if err := sc.Err(); err != nil {
+		log.Printf("scanner error: %v", err)
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit()
 }
