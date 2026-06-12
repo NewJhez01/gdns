@@ -18,7 +18,7 @@ services:
 
   test:
     image: gdns
-    command: go test ./test
+    command: go test ./test/...
 
   redis:
     image: redis:7-alpine
