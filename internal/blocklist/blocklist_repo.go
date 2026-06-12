@@ -13,7 +13,7 @@ import (
 )
 
 type SqliteClient struct {
-	db *sql.DB
+	Db *sql.DB
 }
 
 func CreateNewDbConn(path string) (*SqliteClient, error) {
@@ -30,7 +30,7 @@ func CreateNewDbConn(path string) (*SqliteClient, error) {
 
 func (r *SqliteClient) IsBlocked(key string, ctx context.Context) (bool, error) {
 	isBlocked := false
-	err := r.db.QueryRowContext(
+	err := r.Db.QueryRowContext(
 		ctx,
 		"SELECT EXISTS(SELECT 1 FROM blocked_domains WHERE domain = ?)",
 		key,
@@ -41,8 +41,14 @@ func (r *SqliteClient) IsBlocked(key string, ctx context.Context) (bool, error) 
 	return isBlocked, nil
 }
 
+func closeConn(f *os.File) {
+	if err := f.Close(); err != nil {
+		log.Fatalf("failed to close db prev: %s", err)
+	}
+}
+
 func (r *SqliteClient) Migrate(ctx context.Context) error {
-	_, err := r.db.ExecContext(ctx,
+	_, err := r.Db.ExecContext(ctx,
 		`
         CREATE TABLE IF NOT EXISTS blocked_domains (
             domain TEXT PRIMARY KEY
@@ -56,9 +62,9 @@ func (r *SqliteClient) Migrate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer closeConn(f)
 	sc := bufio.NewScanner(f)
-	tx, err := r.db.Begin()
+	tx, err := r.Db.Begin()
 	stmt, err := tx.Prepare("INSERT OR IGNORE INTO blocked_domains(domain) VALUES(?)")
 	if err != nil {
 		tx.Rollback()
