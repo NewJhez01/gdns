@@ -31,7 +31,6 @@ func (a *Answer) ParseAnswer(b []byte, questionLen int) error {
 	}
 	return nil
 }
-}
 
 func CountNameLen(b []byte, consumed int) int {
 	if len(b) == 0 {
