@@ -64,8 +64,11 @@ func (r *SqliteClient) Migrate(ctx context.Context) error {
 	}
 	defer closeConn(f)
 	sc := bufio.NewScanner(f)
-	tx, err := r.Db.Begin()
-	stmt, err := tx.Prepare("INSERT OR IGNORE INTO blocked_domains(domain) VALUES(?)")
+	tx, err := r.Db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	stmt, err := tx.PrepareContext(ctx, "INSERT OR IGNORE INTO blocked_domains(domain) VALUES(?)")
 	if err != nil {
 		tx.Rollback()
 		return err
