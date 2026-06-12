@@ -53,6 +53,10 @@ func (r *SqliteClient) Migrate(ctx context.Context) error {
 	}
 
 	f, err := os.Open(os.Getenv("SQLITE_BLOCKLIST"))
+	if os.IsNotExist(err) {
+		log.Print("no seed file found skipping")
+		return nil // no seed file, skip for the integration test
+	}
 	if err != nil {
 		return err
 	}

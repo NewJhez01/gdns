@@ -1,63 +1,83 @@
 package server
 
 import (
+	"context"
 	"log"
 	"net"
 	"os"
-	"os/signal"
-	"syscall"
+	"sync"
 
 	"github.com/gdns/internal/blocklist"
 	"github.com/gdns/internal/cache"
 	"github.com/gdns/internal/dns"
 )
 
-type server struct {
-	conn    *net.UDPConn
+type Server struct {
+	Conn    *net.UDPConn
 	rClient cache.RedisClient
 	s       blocklist.SqliteClient
+	wg      sync.WaitGroup
+	ctx     context.Context
+	cancel  context.CancelFunc
 }
 
-const (
-	PORT      = ":5555"
-	CONN_TYPE = "udp"
-)
-
-func Serve(redisClient cache.RedisClient, b blocklist.SqliteClient) {
-	addr, err := net.ResolveUDPAddr(CONN_TYPE, PORT)
-	if err != nil {
-		log.Fatalf("failed to resolve udp addr prev: %s", err)
+func NewServer(redisClient cache.RedisClient, b blocklist.SqliteClient) *Server {
+	ctx, cancel := context.WithCancel(context.Background())
+	return &Server{
+		rClient: redisClient,
+		s:       b,
+		ctx:     ctx,
+		cancel:  cancel,
 	}
-	conn, err := net.ListenUDP(CONN_TYPE, addr)
-	if err != nil {
-		log.Fatalf("failed to listen to udp addr prev: %s", err)
-	}
-	s := &server{
-		conn,
-		redisClient,
-		b,
-	}
-	go s.listen()
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
-	<-sig
 }
 
-func (s *server) listen() {
-	defer s.conn.Close()
+func (srv *Server) Start() error {
+	addr, err := net.ResolveUDPAddr("udp", os.Getenv("UDP_PORT"))
+	if err != nil {
+		return err
+	}
+	conn, err := net.ListenUDP("udp", addr)
+	if err != nil {
+		return err
+	}
+	srv.Conn = conn
+	srv.wg.Add(1)
+	go srv.listen()
+	return nil
+}
+
+func (srv *Server) Stop() {
+	srv.cancel()
+	if srv.Conn != nil {
+		srv.Conn.Close()
+	}
+	srv.wg.Wait()
+}
+
+func (srv *Server) listen() {
+	defer srv.wg.Done()
 	buff := make([]byte, 512)
 	for {
-		n, addr, err := s.conn.ReadFromUDP(buff)
+		select {
+		case <-srv.ctx.Done():
+			return
+		default:
+		}
+		n, addr, err := srv.Conn.ReadFromUDP(buff)
 		if err != nil {
-			log.Printf("failed to read from udp continue err: %s", err)
+			if srv.ctx.Err() != nil {
+				return // graceful shutdown
+			}
+			log.Printf("failed to read from udp: %s", err)
 			continue
 		}
-		resp, err := dns.Resolve(buff[:n], &s.rClient, &s.s)
+		resp, err := dns.Resolve(buff[:n], &srv.rClient, &srv.s)
 		if err != nil {
-			log.Printf("failed to resolve the dns request continue err: %s", err)
+			log.Printf("failed to resolve: %s", err)
 			continue
 		}
-		// todo see issue #15 a valid dns response will be sent back
-		s.conn.WriteToUDP([]byte(resp), addr)
+		if _, err := srv.Conn.WriteToUDP(resp, addr); err != nil {
+			log.Printf("failed to write response: %s", err)
+		}
 	}
 }

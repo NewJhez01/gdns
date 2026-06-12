@@ -4,6 +4,8 @@ import (
 	"context"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gdns/cmd/server"
@@ -42,5 +44,14 @@ func main() {
 		DialTimeout:  3 * time.Second,
 	})
 	r := cache.CreateNewRedisClient(redisClient)
-	server.Serve(*r, *sqliteClient)
+	srv := server.NewServer(*r, *sqliteClient)
+	if err := srv.Start(); err != nil {
+		log.Fatalf("failed to start server: %s", err)
+	}
+
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+	<-sig
+
+	srv.Stop()
 }
