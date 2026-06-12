@@ -77,7 +77,7 @@ func (r *SqliteClient) Migrate(ctx context.Context) error {
 		if domain == "" {
 			continue
 		}
-		_, err := stmt.Exec(domain)
+		_, err := stmt.ExecContext(ctx, domain)
 		if err != nil {
 			log.Printf("failed to insert %s: %v", domain, err)
 			continue
@@ -88,7 +88,9 @@ func (r *SqliteClient) Migrate(ctx context.Context) error {
 
 	if err := sc.Err(); err != nil {
 		log.Printf("scanner error: %v", err)
-		tx.Rollback()
+		if err := tx.Rollback(); err != nil {
+			log.Fatalf("failed to rollback transcation prev: %s", err)
+		}
 		return err
 	}
 	return tx.Commit()
