@@ -2,7 +2,7 @@ package parser
 
 import (
 	"encoding/binary"
-	"fmt"
+	"log"
 )
 
 type (
@@ -53,7 +53,7 @@ func CreateHeaders() *Header {
 	return &Header{}
 }
 
-func (h *Header) Parse(buff [12]byte) error {
+func (h *Header) Parse(buff [12]byte) {
 	h.Id = SixteenBit(buff[:2])
 	h.QdCount = SixteenBit(buff[4:6])
 	h.AnCount = SixteenBit(buff[6:8])
@@ -61,15 +61,10 @@ func (h *Header) Parse(buff [12]byte) error {
 	h.ArCount = SixteenBit(buff[10:])
 
 	miscBuf := buff[2:4]
-	err := h.parseMisc(miscBuf)
-	if err != nil {
-		return fmt.Errorf("failed to parse the second row of 16 bits from dns prev: %s", err)
-	}
-
-	return nil
+	h.parseMisc(miscBuf)
 }
 
-func (h *Header) parseMisc(b []byte) error {
+func (h *Header) parseMisc(b []byte) {
 	bits := binary.BigEndian.Uint16(b)
 	h.Qr = QR((bits >> 15) & 0x1)
 	h.OpCode = OPCODE((bits >> 11) & 0xF)
@@ -78,9 +73,7 @@ func (h *Header) parseMisc(b []byte) error {
 	h.Rd = (bits>>8)&0x1 == 1
 	h.Ra = (bits>>7)&0x1 == 1
 	if z := ((bits >> 4) & 0x7); z != 0 {
-		return fmt.Errorf("Z must be 0 and is %d", z)
+		log.Printf("Z should be 0 and is %d", z)
 	}
 	h.Rcode = RCODE(bits & 0xF)
-
-	return nil
 }

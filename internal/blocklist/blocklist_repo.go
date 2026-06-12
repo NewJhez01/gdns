@@ -53,6 +53,10 @@ func (r *SqliteClient) Migrate(ctx context.Context) error {
 	}
 
 	f, err := os.Open(os.Getenv("SQLITE_BLOCKLIST"))
+	if os.IsNotExist(err) {
+		log.Print("no seed file found skipping")
+		return nil // no seed file, skip for the integration test
+	}
 	if err != nil {
 		return err
 	}
@@ -64,8 +68,8 @@ func (r *SqliteClient) Migrate(ctx context.Context) error {
 	}
 	stmt, err := tx.PrepareContext(ctx, "INSERT OR IGNORE INTO blocked_domains(domain) VALUES(?)")
 	if err != nil {
-		if err := tx.Rollback(); err != nil {
-			log.Fatalf("failed to rollback transcation prev: %s", err)
+		if rbErr := tx.Rollback(); rbErr != nil {
+			log.Printf("failed to rollback transaction: %v", rbErr)
 		}
 		return err
 	}
@@ -88,9 +92,10 @@ func (r *SqliteClient) Migrate(ctx context.Context) error {
 
 	if err := sc.Err(); err != nil {
 		log.Printf("scanner error: %v", err)
-		if err := tx.Rollback(); err != nil {
-			log.Fatalf("failed to rollback transcation prev: %s", err)
+		if rbErr := tx.Rollback(); rbErr != nil {
+			log.Printf("failed to rollback transaction: %v", rbErr)
 		}
+
 		return err
 	}
 	return tx.Commit()
@@ -98,12 +103,12 @@ func (r *SqliteClient) Migrate(ctx context.Context) error {
 
 func closeConn(f *os.File) {
 	if err := f.Close(); err != nil {
-		log.Fatalf("failed to close db prev: %s", err)
+		log.Printf("failed to close db prev: %s", err)
 	}
 }
 
 func closeStmt(s *sql.Stmt) {
 	if err := s.Close(); err != nil {
-		log.Fatalf("failed to close statement prev %s", err)
+		log.Printf("failed to close statement prev %s", err)
 	}
 }

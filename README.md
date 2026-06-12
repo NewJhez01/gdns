@@ -46,15 +46,22 @@ dig @localhost example.com
 
 ```text
 cmd/
+  main.go                # Wire dependencies
   server/
-    main.go              # Wire dependencies, start UDP server, handle signals
+    main.go              # Start UDP server, handle signals
 
 internal/
   dns/
-    header.go            # 12-byte DNS header parser and marshaller
-    question.go          # QNAME length-prefixed label parser
     resolver.go          # Orchestrate cache → blocklist → upstream
-    upstream.go          # Forward to Cloudflare (1.1.1.1) with timeout
+    upstream.go          # Forward to Cloudflare (1.1.1.1) with timeout orchestrate answer parsing
+    parser/
+      answer_parser.go   # Parses the answer recursively with the pointer
+      header_parser.go   # 12-byte DNS header parser
+      marshall.go        # Marshals the DNS response
+      parser.go          # orchestrates the parsing of the incoming request
+      question_parser.go # QNAME length-prefixed label parser
+      response.go        # Builds the response to DNS request
+
   cache/
     cache.go             # Cache interface
     cache_repo.go        # Cache implementation with Redis implementation with JSON serialization
@@ -63,12 +70,16 @@ internal/
     blocklist_repo.go    # Blocklist implementation with SQLite implementation with migration
 
 test/
-  header_parser_test.go
-  question_parser_test.go
-  nxdomain_test.go
-
+  unit/
+    answer_parser_test.go
+    header_parser_test.go
+    nxdomain_test.go
+    question_parser_test.go
+  integration/
+    integration_test.go # Tests the interaction of redis sqlite and upstream resolver
 data/
-  blocklist.db           # SQLite database (mounted volume)
+  blocklist.db          # SQLite database (mounted volume)
+  blocked_domains.txt   # The seed to be dumped in the data base containing malicious domains
 
 docker-compose.yml
 Dockerfile
@@ -76,13 +87,11 @@ Dockerfile
 
 ## Design Decisions
 
-| Decision                             | Rationale                                                  |
-| ------------------------------------ | ---------------------------------------------------------- |
-| Built parser from scratch            | Deep understanding of DNS wire format; no magic            |
-| Feature-based packages               | Clear boundaries, easy to test, swap implementations       |
-| Redis + SQLite                       | Cache for speed, SQLite for persistence and blocklist size |
-| `WITHOUT ROWID`                      | Eliminates rowid table; faster exact-match lookups         |
-| `SetDeadline` over `context` for UDP | UDP is connectionless; deadline is simpler and sufficient  |
+| Decision                  | Rationale                                                  |
+| ------------------------- | ---------------------------------------------------------- |
+| Built parser from scratch | Deep understanding of DNS wire format; no magic            |
+| Feature-based packages    | Clear boundaries, easy to test, swap implementations       |
+| Redis + SQLite            | Cache for speed, SQLite for persistence and blocklist size |
 
 ## Why Build a DNS Server?
 

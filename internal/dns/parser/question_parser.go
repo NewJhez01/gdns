@@ -17,6 +17,7 @@ type Question struct {
 	Qname  string
 	Qtype  SixteenBit
 	Qclass SixteenBit
+	Len    int
 }
 
 func CreateQuestion() *Question {
@@ -37,6 +38,7 @@ func (q *Question) ParseQuestion(b []byte) error {
 		state = s
 		bytesRead += n
 	}
+	q.Len = bytesRead
 	return nil
 }
 

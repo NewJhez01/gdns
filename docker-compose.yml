@@ -13,11 +13,12 @@ services:
       - SQLITE_URL=/app/data/blocklist.db
       - SQLITE_BLOCKLIST=/app/data/blocked_domains.txt
       - REDIS_URL=redis:6379
+      - UDP_PORT=:5555
     restart: unless-stopped
 
   test:
     image: gdns
-    command: go test ./test
+    command: go test ./test/unit/...
 
   redis:
     image: redis:7-alpine

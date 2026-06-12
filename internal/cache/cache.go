@@ -7,8 +7,9 @@ import (
 )
 
 type Value struct {
-	Answer    []byte
+	Rdata     []byte
 	IsBlocked bool
+	TTL       uint32
 }
 
 var ErrEmpty = errors.New("no val in cache")

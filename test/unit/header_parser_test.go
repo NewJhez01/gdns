@@ -1,4 +1,4 @@
-package test
+package unit
 
 import (
 	"testing"
@@ -10,8 +10,7 @@ import (
 func TestParser_StandardQuery(t *testing.T) {
 	h := parser.CreateHeaders()
 	dnsMock := [12]byte{0x00, 0x01, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
-	err := h.Parse(dnsMock)
-	assert.NoError(t, err)
+	h.Parse(dnsMock)
 	expectedStruct := &parser.Header{
 		Aa:      false,
 		Tc:      false,
@@ -33,8 +32,7 @@ func TestParser_StandardQuery(t *testing.T) {
 func TestParser_ResponseWithAllFlags(t *testing.T) {
 	h := parser.CreateHeaders()
 	dnsMock := [12]byte{0xAB, 0xCD, 0x87, 0x80, 0x00, 0x02, 0x00, 0x01, 0x00, 0x03, 0x00, 0x04}
-	err := h.Parse(dnsMock)
-	assert.NoError(t, err)
+	h.Parse(dnsMock)
 	expectedStruct := &parser.Header{
 		Aa:      true,
 		Tc:      true,
@@ -56,8 +54,7 @@ func TestParser_ResponseWithAllFlags(t *testing.T) {
 func TestParser_InverseQuery(t *testing.T) {
 	h := parser.CreateHeaders()
 	dnsMock := [12]byte{0x12, 0x34, 0x08, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
-	err := h.Parse(dnsMock)
-	assert.NoError(t, err)
+	h.Parse(dnsMock)
 	expectedStruct := &parser.Header{
 		Aa:      false,
 		Tc:      false,
@@ -79,8 +76,7 @@ func TestParser_InverseQuery(t *testing.T) {
 func TestParser_ServerStatus(t *testing.T) {
 	h := parser.CreateHeaders()
 	dnsMock := [12]byte{0xFF, 0xFF, 0x90, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
-	err := h.Parse(dnsMock)
-	assert.NoError(t, err)
+	h.Parse(dnsMock)
 	expectedStruct := &parser.Header{
 		Aa:      false,
 		Tc:      false,
@@ -122,8 +118,7 @@ func TestParser_VariousRCodes(t *testing.T) {
 				byte(secondRow >> 8), byte(secondRow & 0xFF),
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			}
-			err := h.Parse(dnsMock)
-			assert.NoError(t, err)
+			h.Parse(dnsMock)
 			assert.Equal(t, tt.expected, h.Rcode)
 		})
 	}
@@ -132,8 +127,7 @@ func TestParser_VariousRCodes(t *testing.T) {
 func TestParser_MaxCounts(t *testing.T) {
 	h := parser.CreateHeaders()
 	dnsMock := [12]byte{0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
-	err := h.Parse(dnsMock)
-	assert.NoError(t, err)
+	h.Parse(dnsMock)
 	expectedStruct := &parser.Header{
 		Aa:      false,
 		Tc:      false,
@@ -155,8 +149,7 @@ func TestParser_MaxCounts(t *testing.T) {
 func TestParser_ZeroBuffer(t *testing.T) {
 	h := parser.CreateHeaders()
 	dnsMock := [12]byte{}
-	err := h.Parse(dnsMock)
-	assert.NoError(t, err)
+	h.Parse(dnsMock)
 	expectedStruct := &parser.Header{
 		Aa:      false,
 		Tc:      false,
@@ -175,33 +168,10 @@ func TestParser_ZeroBuffer(t *testing.T) {
 	assert.Equal(t, expectedStruct, h)
 }
 
-func TestParser_ZNonZeroError(t *testing.T) {
-	tests := []struct {
-		name string
-		val  byte
-	}{
-		{"z1", 0x10},
-		{"z2", 0x20},
-		{"z4", 0x40},
-		{"z7", 0x70},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			h := parser.CreateHeaders()
-			dnsMock := [12]byte{0x00, 0x00, 0x00, tt.val, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
-			err := h.Parse(dnsMock)
-			assert.Error(t, err)
-			assert.Contains(t, err.Error(), "Z must be 0")
-		})
-	}
-}
-
 func TestParser_RealWorldGoogleDNS(t *testing.T) {
 	h := parser.CreateHeaders()
 	dnsMock := [12]byte{0x12, 0x34, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
-	err := h.Parse(dnsMock)
-	assert.NoError(t, err)
+	h.Parse(dnsMock)
 	expectedStruct := &parser.Header{
 		Aa:      false,
 		Tc:      false,
@@ -223,8 +193,7 @@ func TestParser_RealWorldGoogleDNS(t *testing.T) {
 func TestParser_ResponseWithNXDOMAIN(t *testing.T) {
 	h := parser.CreateHeaders()
 	dnsMock := [12]byte{0x00, 0x01, 0x80, 0x03, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00}
-	err := h.Parse(dnsMock)
-	assert.NoError(t, err)
+	h.Parse(dnsMock)
 	expectedStruct := &parser.Header{
 		Aa:      false,
 		Tc:      false,
