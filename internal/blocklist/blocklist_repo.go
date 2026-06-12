@@ -41,12 +41,6 @@ func (r *SqliteClient) IsBlocked(key string, ctx context.Context) (bool, error) 
 	return isBlocked, nil
 }
 
-func closeConn(f *os.File) {
-	if err := f.Close(); err != nil {
-		log.Fatalf("failed to close db prev: %s", err)
-	}
-}
-
 func (r *SqliteClient) Migrate(ctx context.Context) error {
 	_, err := r.Db.ExecContext(ctx,
 		`
@@ -70,10 +64,12 @@ func (r *SqliteClient) Migrate(ctx context.Context) error {
 	}
 	stmt, err := tx.PrepareContext(ctx, "INSERT OR IGNORE INTO blocked_domains(domain) VALUES(?)")
 	if err != nil {
-		tx.Rollback()
+		if err := tx.Rollback(); err != nil {
+			log.Fatalf("failed to rollback transcation prev: %s", err)
+		}
 		return err
 	}
-	defer stmt.Close()
+	defer closeStmt(stmt)
 
 	count := 0
 	for sc.Scan() {
@@ -96,4 +92,16 @@ func (r *SqliteClient) Migrate(ctx context.Context) error {
 		return err
 	}
 	return tx.Commit()
+}
+
+func closeConn(f *os.File) {
+	if err := f.Close(); err != nil {
+		log.Fatalf("failed to close db prev: %s", err)
+	}
+}
+
+func closeStmt(s *sql.Stmt) {
+	if err := s.Close(); err != nil {
+		log.Fatalf("failed to close statement prev %s", err)
+	}
 }
