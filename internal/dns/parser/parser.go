@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -16,6 +17,9 @@ func CreateNewDnsStruct() *Dns {
 type SixteenBit [2]byte
 
 func (d *Dns) Parse(b []byte) error {
+	if len(b) < 12 {
+		return errors.New("header is too short")
+	}
 	h := CreateHeaders()
 	headerBuff := [12]byte(b[:12])
 	h.Parse(headerBuff)

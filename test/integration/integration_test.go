@@ -32,14 +32,20 @@ func setupResolver(t *testing.T) (resolver *net.Resolver, cleanup func()) {
 	if err := db.Migrate(ctx); err != nil {
 		t.Fatalf("failed to migrate: %v", err)
 	}
-	db.Db.Exec("INSERT INTO blocked_domains (domain) VALUES ('doubleclick.net')")
+	if _, err := db.Db.Exec("INSERT INTO blocked_domains (domain) VALUES ('doubleclick.net')"); err != nil {
+		t.Fatalf("failed to insert blocked domain: %v", err)
+	}
 
 	srv := server.NewServer(*cache.CreateNewRedisClient(redisClient), *db)
 	if err := srv.Start(); err != nil {
 		t.Fatalf("failed to start server: %v", err)
 	}
 
-	port := srv.Conn.LocalAddr().(*net.UDPAddr).Port
+	udpAddr, ok := srv.Conn.LocalAddr().(*net.UDPAddr)
+	if !ok {
+		t.Fatalf("expected UDPAddr, got %T", srv.Conn.LocalAddr())
+	}
+	port := udpAddr.Port
 
 	resolver = &net.Resolver{
 		PreferGo: true,

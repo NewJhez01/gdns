@@ -59,7 +59,7 @@ func handleDns(buff []byte, s string, bl blocklist.Blocklist, c cache.Cache, d *
 		IsBlocked: false,
 		TTL:       answer.Ttl,
 	}
-	if err := c.SetDomainName(ctx, s, val, time.Duration(answer.Ttl)); err != nil {
+	if err := c.SetDomainName(ctx, s, val, time.Duration(answer.Ttl)*time.Second); err != nil {
 		return nil, err
 	}
 
