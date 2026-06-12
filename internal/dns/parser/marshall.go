@@ -47,13 +47,3 @@ func (d *Dns) marshall() ([]byte, error) {
 	b = append(b, d.Question.Qclass[1])
 	return b, nil
 }
-
-func (d *Dns) BuildNxDomainResp() ([]byte, error) {
-	d.Header.Qr = Response
-	d.Header.Rcode = NameErr
-	d.Header.QdCount = SixteenBit{0x00, 0x01}
-	d.Header.AnCount = SixteenBit{0x00, 0x00}
-	d.Header.NsCount = SixteenBit{0x00, 0x00}
-	d.Header.ArCount = SixteenBit{0x00, 0x00}
-	return d.marshall()
-}

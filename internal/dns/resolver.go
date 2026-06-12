@@ -26,7 +26,7 @@ func Resolve(b []byte, c cache.Cache, bl blocklist.Blocklist) ([]byte, error) {
 	if val.IsBlocked {
 		return dns.BuildNxDomainResp()
 	}
-	return val.Answer, nil
+	return parser.BuildResponse(*dns, val.Rdata, val.TTL)
 }
 
 func handleDns(buff []byte, s string, bl blocklist.Blocklist, c cache.Cache, d *parser.Dns) ([]byte, error) {
@@ -49,18 +49,19 @@ func handleDns(buff []byte, s string, bl blocklist.Blocklist, c cache.Cache, d *
 		return d.BuildNxDomainResp()
 	}
 
-	answer, err := forwardToUpstream(buff)
+	answer, err := forwardToUpstream(buff, d.Question.Len)
 	if err != nil {
 		return nil, err
 	}
 
 	val := cache.Value{
-		Answer:    answer,
+		Rdata:     answer.Rdata,
 		IsBlocked: false,
+		TTL:       answer.Ttl,
 	}
-	if err := c.SetDomainName(ctx, s, val, 2*time.Minute); err != nil {
+	if err := c.SetDomainName(ctx, s, val, time.Duration(answer.Ttl)); err != nil {
 		return nil, err
 	}
 
-	return answer, nil
+	return parser.BuildResponse(*d, answer.Rdata, answer.Ttl)
 }
