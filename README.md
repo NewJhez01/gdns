@@ -96,6 +96,7 @@ Dockerfile
 ## Why Build a DNS Server?
 
 This project explores the fundamentals of network protocols, database optimization, and concurrent systems design. Built from scratch without DNS libraries to deeply understand the wire format.
+For more info I have also written a blog post [here](https://dev.to/newjhez01/regaining-privacy-by-parsing-dns-requests-bit-by-bit-462h)
 
 ## Contributing
 
