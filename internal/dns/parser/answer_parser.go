@@ -21,12 +21,16 @@ func NewAnswer() *Answer {
 
 func (a *Answer) ParseAnswer(b []byte, questionLen int) error {
 	offset := 12 + questionLen
+	if len(b) < offset {
+		return errors.New("answer section is too short")
+	}
 	nameLen := CountNameLen(b[offset:], 0)
 	a.ParseName(b, 12+questionLen)
 	if err := a.parseAfterAnswer(b[offset+nameLen:]); err != nil {
 		return err
 	}
 	return nil
+}
 }
 
 func CountNameLen(b []byte, consumed int) int {
