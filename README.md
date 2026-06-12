@@ -46,8 +46,9 @@ dig @localhost example.com
 
 ```text
 cmd/
+  main.go                # Wire dependencies
   server/
-    main.go              # Wire dependencies, start UDP server, handle signals
+    main.go              # Start UDP server, handle signals
 
 internal/
   dns/
