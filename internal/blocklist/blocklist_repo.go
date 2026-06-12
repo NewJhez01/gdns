@@ -52,7 +52,7 @@ func (r *SqliteClient) Migrate(ctx context.Context) error {
 		return err
 	}
 
-	f, err := os.Open("data/blocked_domains.txt")
+	f, err := os.Open(os.Getenv("SQLITE_BLOCKLIST"))
 	if err != nil {
 		return err
 	}
