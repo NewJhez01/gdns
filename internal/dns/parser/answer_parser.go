@@ -25,7 +25,7 @@ func (a *Answer) ParseAnswer(b []byte, questionLen int) error {
 		return errors.New("answer section is too short")
 	}
 	nameLen := CountNameLen(b[offset:], 0)
-	a.ParseName(b, 12+questionLen)
+	a.ParseName(b, 12+questionLen, 0)
 	if err := a.parseAfterAnswer(b[offset+nameLen:]); err != nil {
 		return err
 	}
@@ -63,19 +63,22 @@ func (a *Answer) parseAfterAnswer(b []byte) error {
 	return nil
 }
 
-func (a *Answer) ParseName(b []byte, cursor int) {
+func (a *Answer) ParseName(b []byte, cursor, depth int) {
+	if depth > 10 {
+		return
+	}
 	if b[cursor] == 0 {
 		return
 	}
 	if b[cursor]&0xC0 == 0xC0 {
 		// ptr found call recursive with offset of pointer
 		restBits := binary.BigEndian.Uint16(b[cursor:])
-		a.ParseName(b, int(restBits&0x3FFF))
+		a.ParseName(b, int(restBits&0x3FFF), depth+1)
 		return
 	}
 	// parse label plus name
 	n := a.appendDomain(b[cursor:])
-	a.ParseName(b, cursor+n)
+	a.ParseName(b, cursor+n, depth+1)
 }
 
 func (a *Answer) appendDomain(b []byte) int {
