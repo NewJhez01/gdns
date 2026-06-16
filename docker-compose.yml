@@ -18,8 +18,12 @@ services:
 
   test:
     image: gdns
-    command: go test ./test/unit/...
-
+    command:
+      [
+        "/bin/sh",
+        "-c",
+        "go test ./test/unit/... && go test ./test/fuzz/... -fuzz=FuzzParseAnswer -fuzztime=30s && go test ./test/fuzz/... -fuzz=FuzzDnsParse -fuzztime=30s",
+      ]
   redis:
     image: redis:7-alpine
     ports:
