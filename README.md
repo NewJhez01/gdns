@@ -14,33 +14,40 @@ This project will parse incoming DNS requests and run them against a preselected
 
 ## Getting Started
 
-### Prerequisites
+## Prerequisites
 
 - Docker & Docker Compose
-- Port 53/UDP available (or configure alternative in `docker-compose.yml`)
+- Port 53/UDP available on the host (or configure an alternative in docker-compose.yml)
 
-### Quick Start
+## Quick Start
 
 ```bash
-
 git clone git@github.com:NewJhez01/gdns.git
 cd gdns
 docker compose up -d
+
 ```
 
 This starts:
 
 - Redis for response caching
-- GDNS UDP server on port 5555 (inside docker), with automatic SQLite migration on first boot
+- GDNS UDP server on port 53 (host), mapped to 5555 (container), with automatic SQLite migration on first boot
 
-### Configure Your Network
+## Configure Your Network
 
-Point your router's DNS to the host running GDNS, or test locally:
-Ensure your router/firewall forwards or allows UDP port 5555 to the server IP.
+Point your router's DNS to the host IP running GDNS:
+
+```
+Router DNS: 192.168.1.100 ← your host machine's IP. No port needed, 53 is implicit with DNS request
+```
+
+Or test locally:
 
 ```bash
-dig @localhost example.com
+dig @localhost example.com ← no port needed, 53 is implicit
 ```
+
+Note: The container maps host port 53 → container port 5555. External clients (including your router) must use port 53, not 5555.
 
 ## Project Structure
 
