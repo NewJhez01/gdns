@@ -45,13 +45,20 @@ func (q *Question) ParseQuestion(b []byte) error {
 func (q *Question) parseStruct(b []byte, s state) (int, state, error) {
 	switch s {
 	case QNAME:
+		if len(b) < 1 {
+			return 0, DONE, errors.New("length is too short")
+		}
 		if b[0] == 0 {
 			return 1, QTYPE, nil
 		}
 		if q.Qname != "" {
 			q.Qname += "."
 		}
-		q.Qname += string(b[1 : 1+b[0]])
+		labelLen := int(b[0])
+		if len(b) < 1+labelLen {
+			return 0, DONE, errors.New("invalid qname")
+		}
+		q.Qname += string(b[1 : 1+labelLen])
 
 		return 1 + int(b[0]), QNAME, nil
 	case QTYPE:

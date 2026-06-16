@@ -6,9 +6,8 @@ import (
 	"testing"
 
 	"github.com/gdns/internal/dns/parser"
+	"github.com/stretchr/testify/assert"
 )
-
-// --- CountNameLen tests ---
 
 func TestCountNameLen(t *testing.T) {
 	tests := []struct {
@@ -35,7 +34,8 @@ func TestCountNameLen(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := parser.CountNameLen(tt.input, 0)
+			got, err := parser.CountNameLen(tt.input, 0)
+			assert.NoError(t, err)
 			if got != tt.expected {
 				t.Errorf("CountNameLen() = %d, want %d", got, tt.expected)
 			}
@@ -43,10 +43,7 @@ func TestCountNameLen(t *testing.T) {
 	}
 }
 
-// --- ParseName tests ---
-
 func TestParseName(t *testing.T) {
-	// Build a message: header (12) + question name at offset 12
 	header := make([]byte, 12)
 	questionName := []byte{3, 'w', 'w', 'w', 6, 'g', 'o', 'o', 'g', 'l', 'e', 3, 'c', 'o', 'm', 0}
 	qtype := []byte{0x00, 0x01}
@@ -56,14 +53,13 @@ func TestParseName(t *testing.T) {
 	msg = append(msg, qtype...)
 	msg = append(msg, qclass...)
 
-	// Answer section starts at offset 32 (12 + 20)
-	// Put a pointer to the question name
 	answer := []byte{0xC0, 0x0C, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x3C, 0x00, 0x04, 0xD8, 0x3A, 0xCF, 0x0E}
 	msg = append(msg, answer...)
 
 	t.Run("follows pointer to question name", func(t *testing.T) {
 		a := parser.NewAnswer()
-		a.ParseName(msg, 32) // start of answer NAME
+		err := a.ParseName(msg, 32, 0)
+		assert.NoError(t, err)
 
 		want := []string{"www", "google", "com"}
 		if len(a.Name) != len(want) {
@@ -77,7 +73,6 @@ func TestParseName(t *testing.T) {
 	})
 
 	t.Run("reads direct name in answer section", func(t *testing.T) {
-		// Message where answer name is literal, not a pointer
 		directName := []byte{3, 'f', 'o', 'o', 0}
 		rest := []byte{0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x3C, 0x00, 0x04, 0x08, 0x08, 0x08, 0x08}
 		directMsg := append(header, questionName...)
@@ -87,7 +82,8 @@ func TestParseName(t *testing.T) {
 		directMsg = append(directMsg, rest...)
 
 		a := parser.NewAnswer()
-		a.ParseName(directMsg, 32)
+		err := a.ParseName(directMsg, 32, 0)
+		assert.NoError(t, err)
 
 		want := []string{"foo"}
 		if len(a.Name) != len(want) || a.Name[0] != want[0] {
@@ -96,10 +92,7 @@ func TestParseName(t *testing.T) {
 	})
 }
 
-// --- ParseAnswer tests ---
-
 func TestParseAnswer(t *testing.T) {
-	// Build a complete DNS response for www.google.com A record
 	header := []byte{
 		0x00, 0x01, // ID
 		0x81, 0x80, // QR=1, RD=1, RA=1
