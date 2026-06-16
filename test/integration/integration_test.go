@@ -57,10 +57,12 @@ func setupResolver(t *testing.T) (resolver *net.Resolver, cleanup func()) {
 	}
 
 	cleanup = func() {
-		if err := redisClient.FlushDB(context.Background()).Err(); err != nil {
+		srv.Stop()
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		if err := redisClient.FlushDB(ctx).Err(); err != nil {
 			t.Fatalf("failed to flush db after test")
 		}
-		srv.Stop()
 		redisClient.Close()
 		db.Db.Close()
 	}
