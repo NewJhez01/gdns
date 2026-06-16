@@ -32,8 +32,12 @@ func (r *SqliteClient) IsBlocked(key string, ctx context.Context) (bool, error) 
 	isBlocked := false
 	err := r.Db.QueryRowContext(
 		ctx,
-		"SELECT EXISTS(SELECT 1 FROM blocked_domains WHERE domain = ?)",
-		key,
+		`SELECT EXISTS(
+            SELECT 1 FROM blocked_domains 
+            WHERE domain = ? 
+               OR ? LIKE '%.' || domain
+        )`,
+		key, key,
 	).Scan(&isBlocked)
 	if err != nil {
 		return isBlocked, fmt.Errorf("failed to read db prev: %s", err)
