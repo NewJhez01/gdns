@@ -15,19 +15,19 @@ import (
 )
 
 func setupResolver(t *testing.T) (resolver *net.Resolver, cleanup func()) {
-	os.Setenv("UDP_PORT", "127.0.0.1:0")
+	t.Setenv("UDP_PORT", "127.0.0.1:0")
 
 	redisAddr := os.Getenv("REDIS_URL")
-	if redisAddr == "" {
-		redisAddr = "127.0.0.1:6378"
-	}
-	redisClient := redis.NewClient(&redis.Options{Addr: redisAddr})
+	redisClient := redis.NewClient(&redis.Options{Addr: redisAddr, DB: 1})
 
 	db, err := blocklist.CreateNewDbConn(":memory:")
 	if err != nil {
 		t.Fatalf("failed to create db: %v", err)
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	if err := redisClient.FlushDB(ctx).Err(); err != nil {
+		t.Fatalf("failed to flush db pre int test")
+	}
 	defer cancel()
 	if err := db.Migrate(ctx); err != nil {
 		t.Fatalf("failed to migrate: %v", err)
@@ -35,7 +35,9 @@ func setupResolver(t *testing.T) (resolver *net.Resolver, cleanup func()) {
 	if _, err := db.Db.Exec("INSERT INTO blocked_domains (domain) VALUES ('doubleclick.net')"); err != nil {
 		t.Fatalf("failed to insert blocked domain: %v", err)
 	}
-
+	var count int
+	err = db.Db.QueryRow("SELECT COUNT(*) FROM blocked_domains").Scan(&count)
+	t.Logf("blocked domains count: %d", count)
 	srv := server.NewServer(*cache.CreateNewRedisClient(redisClient), *db)
 	if err := srv.Start(); err != nil {
 		t.Fatalf("failed to start server: %v", err)
@@ -56,6 +58,11 @@ func setupResolver(t *testing.T) (resolver *net.Resolver, cleanup func()) {
 
 	cleanup = func() {
 		srv.Stop()
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		if err := redisClient.FlushDB(ctx).Err(); err != nil {
+			t.Fatalf("failed to flush db after test")
+		}
 		redisClient.Close()
 		db.Db.Close()
 	}

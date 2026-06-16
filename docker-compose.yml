@@ -16,15 +16,27 @@ services:
       - UDP_PORT=:5555
     restart: unless-stopped
 
-  test:
+  test_unit:
+    image: gdns
+    command: ["/bin/sh", "-c", "go test ./test/unit/... "]
+
+  test_int:
+    image: gdns
+    command: ["/bin/sh", "-c", "go test ./test/integration/..."]
+    depends_on:
+      - redis
+    environment:
+      - REDIS_URL=redis:6379
+
+  test_fuzz:
     image: gdns
     command:
       [
         "/bin/sh",
         "-c",
-        "go test ./test/unit/... && go test ./test/fuzz/... -fuzz=FuzzParseAnswer -fuzztime=30s && go test ./test/fuzz/... -fuzz=FuzzDnsParse -fuzztime=30s",
+        "go test ./test/fuzz/ --fuzz=FuzzDnsParse -fuzztime=30s && go test ./test/fuzz/ --fuzz=FuzzParseAnswer -fuzztime=30s",
       ]
   redis:
     image: redis:7-alpine
     ports:
-      - "127.0.0.1:6378:6379"
+      - "127.0.0.1:6379:6379"

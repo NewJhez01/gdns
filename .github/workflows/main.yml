@@ -16,4 +16,6 @@ jobs:
       - name: Build and test
         run: |
           docker compose build app
-          docker compose run --rm test
+          docker compose run --rm test_unit
+          docker compose run --rm test_int
+          docker compose run --rm test_fuzz

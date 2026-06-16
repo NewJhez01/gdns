@@ -11,16 +11,10 @@ import (
 	"github.com/gdns/cmd/server"
 	"github.com/gdns/internal/blocklist"
 	"github.com/gdns/internal/cache"
-	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("failed to load env err: %s", err)
-	}
-
 	sqliteClient, err := blocklist.CreateNewDbConn(os.Getenv("SQLITE_URL"))
 	if err != nil {
 		log.Fatalf("failed to connect to sqlite prev: %s", err)
