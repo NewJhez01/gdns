@@ -18,9 +18,6 @@ func setupResolver(t *testing.T) (resolver *net.Resolver, cleanup func()) {
 	os.Setenv("UDP_PORT", "127.0.0.1:0")
 
 	redisAddr := os.Getenv("REDIS_URL")
-	if redisAddr == "" {
-		redisAddr = "redis:6379"
-	}
 	redisClient := redis.NewClient(&redis.Options{Addr: redisAddr, DB: 1})
 
 	db, err := blocklist.CreateNewDbConn(":memory:")
@@ -58,6 +55,7 @@ func setupResolver(t *testing.T) (resolver *net.Resolver, cleanup func()) {
 		srv.Stop()
 		redisClient.Close()
 		db.Db.Close()
+		redisClient.FlushDB(ctx)
 	}
 
 	return resolver, cleanup
