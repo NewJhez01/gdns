@@ -33,7 +33,9 @@ func setupResolver(t *testing.T) (resolver *net.Resolver, cleanup func()) {
 	if _, err := db.Db.Exec("INSERT INTO blocked_domains (domain) VALUES ('doubleclick.net')"); err != nil {
 		t.Fatalf("failed to insert blocked domain: %v", err)
 	}
-
+	var count int
+	err = db.Db.QueryRow("SELECT COUNT(*) FROM blocked_domains").Scan(&count)
+	t.Logf("blocked domains count: %d", count)
 	srv := server.NewServer(*cache.CreateNewRedisClient(redisClient), *db)
 	if err := srv.Start(); err != nil {
 		t.Fatalf("failed to start server: %v", err)
@@ -53,10 +55,10 @@ func setupResolver(t *testing.T) (resolver *net.Resolver, cleanup func()) {
 	}
 
 	cleanup = func() {
+		redisClient.FlushDB(context.Background())
 		srv.Stop()
 		redisClient.Close()
 		db.Db.Close()
-		redisClient.FlushDB(context.Background())
 	}
 
 	return resolver, cleanup
