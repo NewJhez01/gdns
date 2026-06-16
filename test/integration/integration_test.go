@@ -15,7 +15,7 @@ import (
 )
 
 func setupResolver(t *testing.T) (resolver *net.Resolver, cleanup func()) {
-	os.Setenv("UDP_PORT", "127.0.0.1:0")
+	t.Setenv("UDP_PORT", "127.0.0.1:0")
 
 	redisAddr := os.Getenv("REDIS_URL")
 	redisClient := redis.NewClient(&redis.Options{Addr: redisAddr, DB: 1})

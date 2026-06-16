@@ -33,10 +33,10 @@ func (r *SqliteClient) IsBlocked(key string, ctx context.Context) (bool, error) 
 	err := r.Db.QueryRowContext(
 		ctx,
 		`SELECT EXISTS(
-            SELECT 1 FROM blocked_domains 
-            WHERE domain = ? 
-               OR ? LIKE '%.' || domain
-        )`,
+	         SELECT 1 FROM blocked_domains 
+		 WHERE lower(trim(?, '.')) = lower(trim(domain, '.'))
+		 OR lower(trim(?, '.')) LIKE lower(trim(domain, '.')) || '.%'
+		)`,
 		key, key,
 	).Scan(&isBlocked)
 	if err != nil {

@@ -3,7 +3,6 @@ package dns
 import (
 	"context"
 	"errors"
-	"log"
 	"time"
 
 	"github.com/gdns/internal/blocklist"
@@ -16,7 +15,6 @@ func Resolve(b []byte, c cache.Cache, bl blocklist.Blocklist) ([]byte, error) {
 	if err := dns.Parse(b); err != nil {
 		return nil, err
 	}
-	log.Print(dns.Question.Qname)
 	ctx := context.Background()
 	val, err := c.GetDomainNameFromCache(ctx, dns.Question.Qname)
 	if errors.Is(err, cache.ErrEmpty) {
