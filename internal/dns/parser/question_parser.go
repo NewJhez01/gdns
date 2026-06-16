@@ -45,6 +45,9 @@ func (q *Question) ParseQuestion(b []byte) error {
 func (q *Question) parseStruct(b []byte, s state) (int, state, error) {
 	switch s {
 	case QNAME:
+		if len(b) < 1 {
+			return 1, DONE, errors.New("length is too short")
+		}
 		if b[0] == 0 {
 			return 1, QTYPE, nil
 		}

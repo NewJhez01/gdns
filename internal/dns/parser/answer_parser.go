@@ -24,25 +24,34 @@ func (a *Answer) ParseAnswer(b []byte, questionLen int) error {
 	if len(b) < offset {
 		return errors.New("answer section is too short")
 	}
-	nameLen := CountNameLen(b[offset:], 0)
+	nameLen, err := CountNameLen(b[offset:], 0)
+	if err != nil {
+		return err
+	}
 	a.ParseName(b, 12+questionLen, 0)
+	if offset+nameLen >= len(b) {
+		return errors.New("malformed request")
+	}
 	if err := a.parseAfterAnswer(b[offset+nameLen:]); err != nil {
 		return err
 	}
 	return nil
 }
 
-func CountNameLen(b []byte, consumed int) int {
+func CountNameLen(b []byte, consumed int) (int, error) {
 	if len(b) == 0 {
-		return consumed
+		return consumed, nil
 	}
 	if b[0]&0xC0 == 0xC0 {
-		return consumed + 2
+		return consumed + 2, nil
 	}
 
 	label := int(b[0])
 	if label == 0 {
-		return consumed + 1
+		return consumed + 1, nil
+	}
+	if len(b) <= label+1 {
+		return 0, errors.New("malformed request")
 	}
 	return CountNameLen(b[label+1:], consumed+1+label)
 }
@@ -63,27 +72,41 @@ func (a *Answer) parseAfterAnswer(b []byte) error {
 	return nil
 }
 
-func (a *Answer) ParseName(b []byte, cursor, depth int) {
+func (a *Answer) ParseName(b []byte, cursor, depth int) error {
 	if depth > 10 {
-		return
+		return errors.New("endless pointer caught")
+	}
+	if cursor >= len(b) {
+		return errors.New("malformed request")
 	}
 	if b[cursor] == 0 {
-		return
+		return nil
 	}
 	if b[cursor]&0xC0 == 0xC0 {
-		// ptr found call recursive with offset of pointer
+		if cursor+1 >= len(b) {
+			return errors.New("malformed request")
+		}
 		restBits := binary.BigEndian.Uint16(b[cursor:])
 		a.ParseName(b, int(restBits&0x3FFF), depth+1)
-		return
+		return nil
 	}
-	// parse label plus name
-	n := a.appendDomain(b[cursor:])
+	n, err := a.appendDomain(b[cursor:])
+	if err != nil {
+		return err
+	}
 	a.ParseName(b, cursor+n, depth+1)
+	return nil
 }
 
-func (a *Answer) appendDomain(b []byte) int {
+func (a *Answer) appendDomain(b []byte) (int, error) {
+	if len(b) > 0 {
+		return 0, errors.New("malformed request")
+	}
 	label := int(b[0])
+	if len(b) <= label+1 {
+		return 0, errors.New("malformed request")
+	}
 	tempstr := string(b[1 : label+1])
 	a.Name = append(a.Name, tempstr)
-	return len(tempstr) + 1
+	return len(tempstr) + 1, nil
 }
