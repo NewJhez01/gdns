@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/gdns/internal/dns/parser"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParserFuzz(t *testing.T) {}
@@ -35,7 +36,10 @@ func TestCountNameLen(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := parser.CountNameLen(tt.input, 0)
+			got, err := parser.CountNameLen(tt.input, 0)
+			if assert.NoError(t, err) == false {
+				t.Errorf("unexpected error: %s", err)
+			}
 			if got != tt.expected {
 				t.Errorf("CountNameLen() = %d, want %d", got, tt.expected)
 			}
@@ -58,7 +62,10 @@ func TestParseName(t *testing.T) {
 
 	t.Run("follows pointer to question name", func(t *testing.T) {
 		a := parser.NewAnswer()
-		a.ParseName(msg, 32, 0)
+		err := a.ParseName(msg, 32, 0)
+		if assert.NoError(t, err) == false {
+			t.Errorf("unexpected error: %s", err)
+		}
 
 		want := []string{"www", "google", "com"}
 		if len(a.Name) != len(want) {

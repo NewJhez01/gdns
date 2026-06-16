@@ -82,6 +82,7 @@ func (a *Answer) ParseName(b []byte, cursor, depth int) error {
 	if b[cursor] == 0 {
 		return nil
 	}
+	// pointer found
 	if b[cursor]&0xC0 == 0xC0 {
 		if cursor+1 >= len(b) {
 			return errors.New("malformed request")
@@ -94,12 +95,12 @@ func (a *Answer) ParseName(b []byte, cursor, depth int) error {
 	if err != nil {
 		return err
 	}
-	a.ParseName(b, cursor+n, depth+1)
+	a.ParseName(b, cursor+n, depth)
 	return nil
 }
 
 func (a *Answer) appendDomain(b []byte) (int, error) {
-	if len(b) > 0 {
+	if len(b) < 1 {
 		return 0, errors.New("malformed request")
 	}
 	label := int(b[0])
