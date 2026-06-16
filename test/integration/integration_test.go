@@ -25,6 +25,7 @@ func setupResolver(t *testing.T) (resolver *net.Resolver, cleanup func()) {
 		t.Fatalf("failed to create db: %v", err)
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	redisClient.FlushDB(ctx)
 	defer cancel()
 	if err := db.Migrate(ctx); err != nil {
 		t.Fatalf("failed to migrate: %v", err)
@@ -55,7 +56,7 @@ func setupResolver(t *testing.T) (resolver *net.Resolver, cleanup func()) {
 		srv.Stop()
 		redisClient.Close()
 		db.Db.Close()
-		redisClient.FlushDB(ctx)
+		redisClient.FlushDB(context.Background())
 	}
 
 	return resolver, cleanup
