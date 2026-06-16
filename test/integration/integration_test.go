@@ -19,9 +19,9 @@ func setupResolver(t *testing.T) (resolver *net.Resolver, cleanup func()) {
 
 	redisAddr := os.Getenv("REDIS_URL")
 	if redisAddr == "" {
-		redisAddr = "127.0.0.1:6378"
+		redisAddr = "redis:6379"
 	}
-	redisClient := redis.NewClient(&redis.Options{Addr: redisAddr})
+	redisClient := redis.NewClient(&redis.Options{Addr: redisAddr, DB: 1})
 
 	db, err := blocklist.CreateNewDbConn(":memory:")
 	if err != nil {
