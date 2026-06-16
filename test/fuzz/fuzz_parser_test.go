@@ -41,11 +41,8 @@ func FuzzParseAnswer(f *testing.F) {
 
 	// Seed 2: Answer with literal NAME (no pointer)
 	f.Add([]byte{
-		// Header
 		0x00, 0x01, 0x81, 0x80, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
-		// Question: "x"
 		0x01, 'x', 0x00, 0x00, 0x01, 0x00, 0x01,
-		// Answer: literal name "y", A record, TTL 60, IP 1.2.3.4
 		0x01, 'y', 0x00, // NAME "y" (literal, not pointer)
 		0x00, 0x01, // TYPE A
 		0x00, 0x01, // CLASS IN
@@ -76,7 +73,14 @@ func FuzzParseAnswer(f *testing.F) {
 	})
 
 	f.Fuzz(func(t *testing.T, b []byte) {
+		if len(b) < 12 {
+			return
+		}
+		q := parser.CreateQuestion()
+		if err := q.ParseQuestion(b[12:]); err != nil {
+			return
+		}
 		a := parser.NewAnswer()
-		_ = a.ParseAnswer(b, 5) // must not panic; questionLen=5 for "a" + QTYPE + QCLASS
+		_ = a.ParseAnswer(b, q.Len) // must not panic
 	})
 }

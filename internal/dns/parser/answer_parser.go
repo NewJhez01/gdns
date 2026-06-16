@@ -28,7 +28,9 @@ func (a *Answer) ParseAnswer(b []byte, questionLen int) error {
 	if err != nil {
 		return err
 	}
-	a.ParseName(b, 12+questionLen, 0)
+	if err := a.ParseName(b, 12+questionLen, 0); err != nil {
+		return err
+	}
 	if offset+nameLen >= len(b) {
 		return errors.New("malformed request")
 	}
@@ -88,14 +90,18 @@ func (a *Answer) ParseName(b []byte, cursor, depth int) error {
 			return errors.New("malformed request")
 		}
 		restBits := binary.BigEndian.Uint16(b[cursor:])
-		a.ParseName(b, int(restBits&0x3FFF), depth+1)
+		if err := a.ParseName(b, int(restBits&0x3FFF), depth+1); err != nil {
+			return err
+		}
 		return nil
 	}
 	n, err := a.appendDomain(b[cursor:])
 	if err != nil {
 		return err
 	}
-	a.ParseName(b, cursor+n, depth)
+	if err := a.ParseName(b, cursor+n, depth); err != nil {
+		return err
+	}
 	return nil
 }
 
