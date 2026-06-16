@@ -54,7 +54,11 @@ func (q *Question) parseStruct(b []byte, s state) (int, state, error) {
 		if q.Qname != "" {
 			q.Qname += "."
 		}
-		q.Qname += string(b[1 : 1+b[0]])
+		labelLen := int(b[0])
+		if len(b) <= 1+labelLen {
+			return 0, DONE, errors.New("invalid qname")
+		}
+		q.Qname += string(b[1 : 1+labelLen])
 
 		return 1 + int(b[0]), QNAME, nil
 	case QTYPE:
